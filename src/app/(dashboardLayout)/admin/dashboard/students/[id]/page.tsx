@@ -7,6 +7,9 @@ import StudentSummaryCard from "@/components/modules/student/StudentSummaryCard"
 import EnrollmentForm from "@/components/modules/student/EnrollmentForm";
 import EditStudentModal from "@/components/modules/student/EditStudentModal";
 
+export const dynamic = "force-dynamic"; // Important: Do NOT use force-static
+export const revalidate = 1000; // Revalidate every 1000 seconds (about 16.67 minutes)
+
 interface Props {
     params: Promise<{ id: string }>;
     searchParams: Promise<{ justCreated?: string }>;

@@ -1,11 +1,19 @@
-
 import CreateAcademicYearModal from "@/components/AcademicStructure/CreateAcademicYearModal";
 import CreateClassModal from "@/components/AcademicStructure/CreateClassModal";
 import CreateSectionModal from "@/components/AcademicStructure/CreateSectionModal";
-import { getClasses } from "@/service/academic/createAcademicYear.service";
+import AcademicStructureClient from "@/components/modules/academic-structure-client/academic-structure-client";
+import { getClasses, getAllAcademicYears } from "@/service/academic/createAcademicYear.service";
+export const dynamic = "force-dynamic"; // Important: Do NOT use force-static
+export const revalidate = 1000; // Revalidate every 1000 seconds (about 16.67 minutes)
 
 export default async function AcademicStructurePage() {
-    const classes = await getClasses();
+    const [classes, academicYearsRes] = await Promise.all([
+        getClasses(),
+        getAllAcademicYears(),
+    ]);
+
+    const allYears = academicYearsRes.success ? academicYearsRes.data : [];
+    const currentYear = allYears.find((y) => y.isCurrent) ?? allYears[0] ?? null;
 
     return (
         <div className="space-y-6">
@@ -24,38 +32,10 @@ export default async function AcademicStructurePage() {
                 <CreateSectionModal classes={classes.map((c) => ({ id: c.id, name: c.name }))} />
             </div>
 
-            {/* Classes list — showing what getAllClasses returns */}
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {classes.map((cls) => (
-                    <div
-                        key={cls.id}
-                        className="rounded-2xl border border-gray-100 bg-white shadow-sm p-5"
-                    >
-                        <div className="flex items-center justify-between mb-3">
-                            <h3 className="font-semibold text-gray-900">{cls.name}</h3>
-                            <span className="text-xs font-medium text-gray-400">
-                                {cls._count.enrollments} জন শিক্ষার্থী
-                            </span>
-                        </div>
-
-                        <div className="flex flex-wrap gap-1.5">
-                            {cls.sections.length === 0 ? (
-                                <span className="text-xs text-gray-400">কোনো শাখা নেই</span>
-                            ) : (
-                                cls.sections.map((section) => (
-                                    <span
-                                        key={section.id}
-                                        className="text-xs font-medium px-2.5 py-1 rounded-lg bg-rose-50 text-rose-700 border border-rose-100"
-                                    >
-                                        {section.name}
-                                        {section.capacity ? ` (${section.capacity})` : ""}
-                                    </span>
-                                ))
-                            )}
-                        </div>
-                    </div>
-                ))}
-            </div>
+            <AcademicStructureClient
+                classes={classes}
+                currentYear={currentYear}
+            />
         </div>
     );
 }

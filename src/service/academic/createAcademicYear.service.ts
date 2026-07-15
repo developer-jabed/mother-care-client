@@ -212,6 +212,55 @@ export async function createSection(prevState: any, formData: FormData) {
 
 
 
+export interface SectionStudentRow {
+    id: number;
+    rollNumber: number;
+    student: {
+        id: number;
+        fullName: string;
+        admissionNumber: string;
+    };
+}
+
+export async function getStudentsBySection(params: {
+    academicYearId: number;
+    classId: number;
+    sectionId: number;
+}): Promise<{ success: boolean; message?: string; data: SectionStudentRow[] }> {
+    try {
+        const query = new URLSearchParams();
+        query.set("academicYearId", String(params.academicYearId));
+        query.set("classId", String(params.classId));
+        query.set("sectionId", String(params.sectionId));
+
+        const response = await serverFetch.get(`/student-enrollments/by-section?${query.toString()}`, {
+            next: {
+                tags: ["students-by-section"],
+                revalidate: 1000, 
+            },
+        });
+
+        const result = await response.json();
+
+        if (!result.success) {
+            return { success: false, message: result.message || "তালিকা লোড করতে ব্যর্থ হয়েছে", data: [] };
+        }
+
+        return { success: true, data: result.data };
+    } catch (error: any) {
+        console.error("Get students by section error:", error);
+        return {
+            success: false,
+            message:
+                process.env.NODE_ENV === "development"
+                    ? error.message
+                    : "কিছু একটা ভুল হয়েছে। আবার চেষ্টা করুন।",
+            data: [],
+        };
+    }
+}
+
+
 export interface ClassSection {
     id: number;
     classId: number;
@@ -250,7 +299,19 @@ export async function getClasses(): Promise<ClassWithSections[]> {
 
 
 
-export async function getAllAcademicYears() {
+export interface AcademicYearType {
+    id: number;
+    title: string;
+    startDate: string;
+    endDate: string;
+    isCurrent: boolean;
+}
+
+type GetAllAcademicYearsResult =
+    | { success: true; data: AcademicYearType[] }
+    | { success: false; message: string; data: [] };
+
+export async function getAllAcademicYears(): Promise<GetAllAcademicYearsResult> {
     try {
         const response = await serverFetch.get("/academic-years", {
             next: { tags: ["academic-years-list"] },
@@ -261,7 +322,7 @@ export async function getAllAcademicYears() {
         if (result.success) {
             return {
                 success: true,
-                data: result.data,
+                data: result.data as AcademicYearType[],
             };
         }
 

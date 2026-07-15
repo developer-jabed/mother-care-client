@@ -2,6 +2,7 @@
 
 import { queueResultSms } from "@/service/smsLog/sms.service";
 import { useState, useTransition } from "react";
+import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 
 interface ExamOption {
     id: number;
@@ -36,7 +37,7 @@ export default function SendResultSmsClient({ exams }: Props) {
             if (result.success && result.data) {
                 setMessage({
                     type: "success",
-                    text: `${result.data.examName}: ${result.data.queued}টি SMS পাঠানো হচ্ছে। (${result.data.skippedAlreadySent}টি আগেই পাঠানো হয়েছে, ${result.data.skippedNoPhone}টি ফোন নম্বর নেই)`,
+                    text: `${result.data.examName} এর জন্য ${result.data.queued}টি SMS সারিবদ্ধ হয়েছে।`,
                 });
             } else {
                 setMessage({ type: "error", text: result.message });
@@ -45,62 +46,77 @@ export default function SendResultSmsClient({ exams }: Props) {
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-4 border rounded-lg p-6 max-w-lg">
-            <div>
-                <label htmlFor="examId" className="block text-sm font-medium mb-1">
-                    পরীক্ষা নির্বাচন করুন
-                </label>
-                <select
-                    id="examId"
-                    value={examId}
-                    onChange={(e) => setExamId(e.target.value)}
-                    className="w-full border rounded-md px-3 py-2"
-                    disabled={isPending}
+        <div className="max-w-lg">
+            <form onSubmit={handleSubmit} className="bg-white border rounded-2xl p-8 shadow-sm space-y-6">
+                <div>
+                    <label htmlFor="examId" className="block text-sm font-medium text-gray-700 mb-2">
+                        পরীক্ষা নির্বাচন করুন
+                    </label>
+                    <select
+                        id="examId"
+                        value={examId}
+                        onChange={(e) => setExamId(e.target.value)}
+                        disabled={isPending}
+                        className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                        <option value="">-- পরীক্ষা নির্বাচন করুন --</option>
+                        {exams.map((exam) => (
+                            <option key={exam.id} value={exam.id}>
+                                {exam.name}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                <div className="flex items-center gap-3 bg-gray-50 p-4 rounded-xl">
+                    <input
+                        id="force"
+                        type="checkbox"
+                        checked={force}
+                        onChange={(e) => setForce(e.target.checked)}
+                        disabled={isPending}
+                        className="w-5 h-5 accent-blue-600"
+                    />
+                    <label htmlFor="force" className="text-sm text-gray-700 cursor-pointer">
+                        আগে পাঠানো SMS আবার পাঠান (Force Resend)
+                    </label>
+                </div>
+
+                <button
+                    type="submit"
+                    disabled={isPending || !examId}
+                    className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold py-4 rounded-2xl flex items-center justify-center gap-3 hover:brightness-105 transition-all disabled:opacity-70"
                 >
-                    <option value="">-- পরীক্ষা নির্বাচন করুন --</option>
-                    {exams.map((exam) => (
-                        <option key={exam.id} value={exam.id}>
-                            {exam.name}
-                        </option>
-                    ))}
-                </select>
-            </div>
+                    {isPending ? (
+                        <>
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                            SMS পাঠানো হচ্ছে...
+                        </>
+                    ) : (
+                        "ফলাফল SMS পাঠান"
+                    )}
+                </button>
 
-            <div className="flex items-center gap-2">
-                <input
-                    id="force"
-                    type="checkbox"
-                    checked={force}
-                    onChange={(e) => setForce(e.target.checked)}
-                    disabled={isPending}
-                />
-                <label htmlFor="force" className="text-sm">
-                    আগে পাঠানো SMS আবার পাঠান (force)
-                </label>
-            </div>
+                {exams.length === 0 && (
+                    <p className="text-amber-600 text-center text-sm">কোনো প্রকাশিত পরীক্ষা পাওয়া যায়নি।</p>
+                )}
 
-            <button
-                type="submit"
-                disabled={isPending || exams.length === 0}
-                className="w-full bg-blue-600 text-white rounded-md py-2 font-medium disabled:opacity-50"
-            >
-                {isPending ? "পাঠানো হচ্ছে..." : "SMS পাঠান"}
-            </button>
-
-            {exams.length === 0 && (
-                <p className="text-sm text-amber-600">কোনো প্রকাশিত পরীক্ষা পাওয়া যায়নি।</p>
-            )}
-
-            {message && (
-                <p
-                    className={`text-sm p-3 rounded-md ${message.type === "success"
-                            ? "bg-green-50 text-green-700"
-                            : "bg-red-50 text-red-700"
-                        }`}
-                >
-                    {message.text}
-                </p>
-            )}
-        </form>
+                {message && (
+                    <div
+                        className={`flex items-start gap-3 p-4 rounded-2xl text-sm ${message.type === "success"
+                                ? "bg-green-50 text-green-700 border border-green-200"
+                                : "bg-red-50 text-red-700 border border-red-200"
+                            }`}
+                    >
+                        {message.type === "success" ? (
+                            <CheckCircle2 className="w-5 h-5 mt-0.5" />
+                        ) : (
+                            <AlertCircle className="w-5 h-5 mt-0.5" />
+                        )}
+                        <span>{message.text}</span>
+                    </div>
+                )}
+            </form>
+        </div>
     );
 }

@@ -2,6 +2,10 @@ import { serverFetch } from "@/lib/server-fetch";
 import { getExams, getExamTypes } from "@/service/exam/exam.service";
 import { ExamsClient, type AcademicYearOption } from "@/components/exam/examClient";
 
+export const dynamic = "force-dynamic"; // Important: Do NOT use force-static
+
+
+
 interface ExamPageProps {
     searchParams: Promise<{
         page?: string;

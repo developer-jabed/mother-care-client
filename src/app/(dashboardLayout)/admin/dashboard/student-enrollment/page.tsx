@@ -2,6 +2,9 @@ import StudentEnrollmentClient from "@/components/studentEnrolled/student-enroll
 import { getAllAcademicYears, getClasses, getCurrentAcademicYear } from "@/service/academic/createAcademicYear.service";
 import { getAllStudents } from "@/service/student/student.service";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 1000;
+
 export default async function StudentEnrolledPage() {
     const [studentsRes, academicYearsRes, classesRes, currentYearRes] = await Promise.all([
         getAllStudents({ limit: 100 }),

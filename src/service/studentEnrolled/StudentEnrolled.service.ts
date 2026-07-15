@@ -19,12 +19,46 @@ export interface StudentEnrollment {
     classId: number;
     sectionId: number;
     rollNumber: string;
+    isCurrent: boolean;
+    status: "ACTIVE" | "PROMOTED" | "COMPLETED" | "TRANSFERRED";
     createdAt: string;
     updatedAt: string;
     academicYear?: { id: number; title: string };
     class?: { id: number; name: string };
     section?: { id: number; name: string };
-    student?: { id: number; fullName: string }; // add this — note: your schema uses `fullName`, not `name`
+    student?: { id: number; fullName: string };
+    promotedFrom?: { academicYearId: number } | null;
+    results?: StudentResult[];
+    smsLogs?: StudentSmsLog[];
+}
+
+export interface StudentResult {
+    id: number;
+    totalMarks: number;
+    percentage: number;
+    grade: string;
+    position: number | null;
+    isPublished: boolean;
+    exam?: {
+        id: number;
+        name: string;
+        examType?: { id: number; name: string } | null;
+    } | null;
+    details?: StudentResultDetail[];
+}
+
+export interface StudentResultDetail {
+    id: number;
+    totalMarks: number;
+    grade: string;
+    subject?: { id: number; name: string } | null;
+}
+
+export interface StudentSmsLog {
+    id: number;
+    phone: string;
+    status: "PENDING" | "SENT" | "DELIVERED" | "FAILED";
+    exam?: { id: number; name: string } | null;
 }
 
 export interface EnrollmentOption {
@@ -281,7 +315,6 @@ interface GetAllStudentEnrollmentsParams {
     classId?: number;
     sectionId?: number;
 }
-
 export async function getAllStudentEnrollments(
     searchParams?: GetAllStudentEnrollmentsParams
 ): Promise<{ success: boolean; message?: string; data: StudentEnrollment[]; meta: PaginationMeta | null }> {
@@ -296,7 +329,10 @@ export async function getAllStudentEnrollments(
         if (searchParams?.sectionId !== undefined) query.set("sectionId", String(searchParams.sectionId));
 
         const response = await serverFetch.get(`/student-enrollments?${query.toString()}`, {
-            next: { tags: ["student-enrollments-list"] },
+            next: {
+                tags: ["student-enrollments-list"],
+                revalidate: 1800, // 30 minutes
+            },
         });
 
         const result = await response.json();

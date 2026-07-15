@@ -3,6 +3,8 @@ import { getSubjects } from "@/service/subject/subject.service";
 import { getResults } from "@/service/result/result.service";
 import { ResultsClient } from "@/components/result/resultClient";
 import { getEnrollmentOptions } from "@/service/studentEnrolled/StudentEnrolled.service";
+export const dynamic = "force-dynamic"; // Important: Do NOT use force-static
+export const revalidate = 1000; // Revalidate every 1000 seconds (about 16.67 minutes)
 
 interface ResultsPageProps {
     searchParams: Promise<{

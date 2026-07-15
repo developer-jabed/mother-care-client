@@ -31,20 +31,17 @@ export async function queueResultSms(payload: QueueResultSmsPayload): Promise<Ac
             headers: { "Content-Type": "application/json" },
         });
 
-
-        console.log(payload.examId)
         const result = await response.json();
 
         if (result.success) {
+            // Revalidate relevant caches
             revalidateTag(`exam-${payload.examId}-results`, "max");
             revalidateTag("admin-dashboard-meta", "max");
 
-            const data: QueueResultSmsResponse = result.data;
-
             return {
                 success: true,
-                message: `${data.queued}টি SMS পাঠানোর জন্য সারিবদ্ধ করা হয়েছে!`,
-                data,
+                message: `${result.data?.queued || 0}টি SMS সফলভাবে সারিবদ্ধ করা হয়েছে!`,
+                data: result.data,
             };
         }
 
@@ -57,10 +54,9 @@ export async function queueResultSms(payload: QueueResultSmsPayload): Promise<Ac
         console.error("Queue result SMS error:", error);
         return {
             success: false,
-            message:
-                process.env.NODE_ENV === "development"
-                    ? error.message
-                    : "কিছু একটা ভুল হয়েছে। আবার চেষ্টা করুন।",
+            message: process.env.NODE_ENV === "development"
+                ? error.message
+                : "কিছু একটা ভুল হয়েছে। আবার চেষ্টা করুন।",
         };
     }
 }

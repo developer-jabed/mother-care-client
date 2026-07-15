@@ -128,7 +128,13 @@ export interface Student {
     isActive: boolean;
     createdAt: string;
     updatedAt: string;
-    user?: { id: number; email: string; role: string } | null;
+    user?: {
+        id: number;
+        email: string;
+        role: string;
+        isEmailVerified: boolean;
+        lastLogin: string | null;
+    } | null;
     enrollments?: StudentEnrollment[];
 }
 

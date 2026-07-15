@@ -11,6 +11,9 @@ import {
 } from "@/components/ui/tabs";
 import { BookOpen, Layers } from "lucide-react";
 
+export const dynamic = "force-dynamic"; // Important: Do NOT use force-static
+export const revalidate = 1000; // Revalidate every 1000 seconds (about 16.67 minutes)
+
 export default async function ClassesSubjectsPage() {
     const [subjectsResult, classesResult, classSubjectsResult] = await Promise.all([
         getSubjects(),

@@ -2,6 +2,9 @@ import { getAllGradingScales } from "@/service/gradingScale/gradingScale.service
 import { getAllAcademicYears } from "@/service/academic/createAcademicYear.service";
 import GradingScaleClient from "@/components/modules/grading-scale/gradingScaleClient";
 
+export const dynamic = "force-dynamic"; // Important: Do NOT use force-static
+export const revalidate = 1000; // Revalidate every 1000 seconds (about 16.67 minutes)
+
 interface Props {
     searchParams: Promise<{
         academicYearId?: string;
