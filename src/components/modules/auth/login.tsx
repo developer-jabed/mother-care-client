@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { loginUser } from "@/service/auth/loginUser";
 import { useActionState, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, Loader2 } from "lucide-react";
 
 const LoginForm = ({ redirect }: { redirect?: string }) => {
   const [state, formAction, isPending] = useActionState(loginUser, null);
@@ -23,7 +23,6 @@ const LoginForm = ({ redirect }: { redirect?: string }) => {
     password: "",
   });
 
-  // Show error toast
   useEffect(() => {
     if (state && !state.success && state.message) {
       toast.error(state.message);
@@ -42,40 +41,45 @@ const LoginForm = ({ redirect }: { redirect?: string }) => {
       <FieldGroup>
         {/* Email Field */}
         <Field>
-          <FieldLabel htmlFor="email">Email Address</FieldLabel>
-          <Input
-            id="email"
-            name="email"
-            type="email"
-            placeholder="your@email.com"
-            value={formData.email}
-            onChange={handleInputChange}
-            required
-            className="h-12"
-          />
+          <FieldLabel htmlFor="email">ইমেইল ঠিকানা</FieldLabel>
+          <div className="relative">
+            <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              placeholder="your@email.com"
+              value={formData.email}
+              onChange={handleInputChange}
+              required
+              className="h-12 pl-10 transition-shadow focus-visible:ring-2 focus-visible:ring-rose-500/30"
+            />
+          </div>
           <InputFieldError field="email" state={state} />
         </Field>
 
-        {/* Password Field with Toggle */}
+        {/* Password Field */}
         <Field>
-          <FieldLabel htmlFor="password">Password</FieldLabel>
+          <FieldLabel htmlFor="password">পাসওয়ার্ড</FieldLabel>
           <div className="relative">
+            <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <Input
               id="password"
               name="password"
               type={showPassword ? "text" : "password"}
-              placeholder="Enter your password"
+              placeholder="আপনার পাসওয়ার্ড লিখুন"
               value={formData.password}
               onChange={handleInputChange}
               required
-              className="h-12 pr-12"
+              className="h-12 pl-10 pr-12 transition-shadow focus-visible:ring-2 focus-visible:ring-rose-500/30"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 transition-colors hover:text-gray-600"
+              aria-label={showPassword ? "পাসওয়ার্ড লুকান" : "পাসওয়ার্ড দেখান"}
             >
-              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              {showPassword ? <EyeOff size={19} /> : <Eye size={19} />}
             </button>
           </div>
           <InputFieldError field="password" state={state} />
@@ -85,13 +89,20 @@ const LoginForm = ({ redirect }: { redirect?: string }) => {
       <Button
         type="submit"
         disabled={isPending}
-        className="w-full h-12 text-base font-semibold"
+        className="h-12 w-full bg-rose-600 text-base font-semibold text-white shadow-md shadow-rose-600/20 transition-all hover:bg-rose-700 hover:shadow-lg hover:shadow-rose-600/30 active:scale-[0.98]"
       >
-        {isPending ? "Signing in..." : "Sign In"}
+        {isPending ? (
+          <span className="flex items-center gap-2">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            প্রবেশ করা হচ্ছে...
+          </span>
+        ) : (
+          "প্রবেশ করুন"
+        )}
       </Button>
 
       <FieldDescription className="text-center text-sm text-gray-500">
-        Need help? Contact your administrator.
+        সহায়তা প্রয়োজন? প্রতিষ্ঠানের প্রশাসকের সাথে যোগাযোগ করুন।
       </FieldDescription>
     </form>
   );

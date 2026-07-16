@@ -36,11 +36,11 @@ const PublicFooter = () => {
               </div>
               <div className="flex items-center gap-3">
                 <Phone className="w-5 h-5 text-emerald-500 flex-shrink-0" />
-                <span>+880 17XX-XXXXXX</span>
+                <span>+8801718-533364</span>
               </div>
               <div className="flex items-center gap-3">
                 <Mail className="w-5 h-5 text-emerald-500 flex-shrink-0" />
-                <span>info@mothercareschool.edu.bd</span>
+                <span>mothercareschoolandcollege416@gmail.com</span>
               </div>
             </div>
           </div>
@@ -53,16 +53,16 @@ const PublicFooter = () => {
                 <Link href="/" className="hover:text-white transition-colors">হোম</Link>
               </li>
               <li>
-                <Link href="/about" className="hover:text-white transition-colors">আমাদের সম্পর্কে</Link>
+                <Link href="#" className="hover:text-white transition-colors">আমাদের সম্পর্কে</Link>
               </li>
               <li>
-                <Link href="/admission" className="hover:text-white transition-colors">ভর্তি</Link>
+                <Link href="#" className="hover:text-white transition-colors">ভর্তি</Link>
               </li>
               <li>
-                <Link href="/academic" className="hover:text-white transition-colors">একাডেমিক</Link>
+                <Link href="#" className="hover:text-white transition-colors">একাডেমিক</Link>
               </li>
               <li>
-                <Link href="/notice" className="hover:text-white transition-colors">নোটিশ</Link>
+                <Link href="#" className="hover:text-white transition-colors">নোটিশ</Link>
               </li>
             </ul>
           </div>
@@ -72,19 +72,19 @@ const PublicFooter = () => {
             <h4 className="text-white font-semibold mb-6 text-lg">একাডেমিক</h4>
             <ul className="space-y-3.5 text-[15px]">
               <li>
-                <Link href="/programs" className="hover:text-white transition-colors">প্রোগ্রামসমূহ</Link>
+                <Link href="#" className="hover:text-white transition-colors">প্রোগ্রামসমূহ</Link>
               </li>
               <li>
-                <Link href="/teachers" className="hover:text-white transition-colors">শিক্ষকবৃন্দ</Link>
+                <Link href="#" className="hover:text-white transition-colors">শিক্ষকবৃন্দ</Link>
               </li>
               <li>
-                <Link href="/results" className="hover:text-white transition-colors">ফলাফল</Link>
+                <Link href="#" className="hover:text-white transition-colors">ফলাফল</Link>
               </li>
               <li>
-                <Link href="/calendar" className="hover:text-white transition-colors">একাডেমিক ক্যালেন্ডার</Link>
+                <Link href="#" className="hover:text-white transition-colors">একাডেমিক ক্যালেন্ডার</Link>
               </li>
               <li>
-                <Link href="/facilities" className="hover:text-white transition-colors">সুবিধাসমূহ</Link>
+                <Link href="#" className="hover:text-white transition-colors">সুবিধাসমূহ</Link>
               </li>
             </ul>
           </div>

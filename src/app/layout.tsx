@@ -32,8 +32,8 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Dpi Progress",
-  description: "A Institution application built with Next.js",
+  title: "মাদার কেয়ার স্কুল অ্যান্ড কলেজ",
+  description: "মাদার কেয়ার স্কুল অ্যান্ড কলেজের অফিসিয়াল ওয়েবসাইট — ভর্তি, একাডেমিক তথ্য, পরীক্ষার ফলাফল এবং প্রাতিষ্ঠানিক সব সেবা এক জায়গায়।",
 };
 
 export default function RootLayout({
