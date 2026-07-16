@@ -35,11 +35,10 @@ const LoginForm = ({ redirect }: { redirect?: string }) => {
   };
 
   return (
-    <form action={formAction} className="space-y-6">
+    <form action={formAction} className="space-y-5">
       {redirect && <input type="hidden" name="redirect" value={redirect} />}
 
       <FieldGroup>
-        {/* Email Field */}
         <Field>
           <FieldLabel htmlFor="email">ইমেইল ঠিকানা</FieldLabel>
           <div className="relative">
@@ -52,13 +51,12 @@ const LoginForm = ({ redirect }: { redirect?: string }) => {
               value={formData.email}
               onChange={handleInputChange}
               required
-              className="h-12 pl-10 transition-shadow focus-visible:ring-2 focus-visible:ring-rose-500/30"
+              className="h-12 pl-10 transition-shadow focus-visible:ring-2 focus-visible:ring-violet-500/30"
             />
           </div>
           <InputFieldError field="email" state={state} />
         </Field>
 
-        {/* Password Field */}
         <Field>
           <FieldLabel htmlFor="password">পাসওয়ার্ড</FieldLabel>
           <div className="relative">
@@ -71,7 +69,7 @@ const LoginForm = ({ redirect }: { redirect?: string }) => {
               value={formData.password}
               onChange={handleInputChange}
               required
-              className="h-12 pl-10 pr-12 transition-shadow focus-visible:ring-2 focus-visible:ring-rose-500/30"
+              className="h-12 pl-10 pr-12 transition-shadow focus-visible:ring-2 focus-visible:ring-violet-500/30"
             />
             <button
               type="button"
@@ -89,7 +87,7 @@ const LoginForm = ({ redirect }: { redirect?: string }) => {
       <Button
         type="submit"
         disabled={isPending}
-        className="h-12 w-full bg-rose-600 text-base font-semibold text-white shadow-md shadow-rose-600/20 transition-all hover:bg-rose-700 hover:shadow-lg hover:shadow-rose-600/30 active:scale-[0.98]"
+        className="h-12 w-full bg-gradient-to-r from-violet-600 to-fuchsia-600 text-base font-semibold text-white shadow-md shadow-fuchsia-600/25 transition-all hover:shadow-lg hover:shadow-fuchsia-600/40 hover:brightness-110 active:scale-[0.98]"
       >
         {isPending ? (
           <span className="flex items-center gap-2">
