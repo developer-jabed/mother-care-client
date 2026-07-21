@@ -94,9 +94,9 @@ interface ActionState {
 const initialActionState: ActionState = { success: false, message: "" };
 
 const EXAM_NAME_OPTIONS = [
-    "অর্ধ বাৎসরিক পরীক্ষা -১",
-    "অর্ধ বাৎসরিক পরীক্ষা -২",
-    "ফাইনাল পরীক্ষা",
+    "Half Yearly -1",
+    "Half Yearly -2",
+    "Final",
 ];
 
 interface ExamsClientProps {
