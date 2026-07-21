@@ -93,6 +93,12 @@ interface ActionState {
 
 const initialActionState: ActionState = { success: false, message: "" };
 
+const EXAM_NAME_OPTIONS = [
+    "অর্ধ বাৎসরিক পরীক্ষা -১",
+    "অর্ধ বাৎসরিক পরীক্ষা -২",
+    "ফাইনাল পরীক্ষা",
+];
+
 interface ExamsClientProps {
     exams: Exam[];
     meta: { page: number; limit: number; total: number } | null;
@@ -477,7 +483,18 @@ function ExamFormDialog({ open, onOpenChange, exam, examTypes, academicYears, on
                     <fieldset disabled={coreFieldsLocked} className="flex flex-col gap-4">
                         <div className="flex flex-col gap-2">
                             <Label htmlFor="name">Exam name</Label>
-                            <Input id="name" name="name" defaultValue={exam?.name} placeholder="Mid-term Examination" />
+                            <Select name="name" defaultValue={exam?.name} disabled={coreFieldsLocked}>
+                                <SelectTrigger id="name">
+                                    <SelectValue placeholder="পরীক্ষা নির্বাচন করুন" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {EXAM_NAME_OPTIONS.map((name) => (
+                                        <SelectItem key={name} value={name}>
+                                            {name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                             {fieldError("name") && <p className="text-sm text-destructive">{fieldError("name")}</p>}
                         </div>
 

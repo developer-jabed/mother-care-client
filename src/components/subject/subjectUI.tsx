@@ -145,6 +145,17 @@ export default function ClassesSubjectsClient({
 
             if (result.success) {
                 toast.success(result.message);
+
+                if (editingSubject && result.data) {
+                    // update existing subject in place
+                    setSubjects((prev) =>
+                        prev.map((s) => (s.id === editingSubject.id ? result.data : s))
+                    );
+                } else if (result.data) {
+                    // prepend newly created subject
+                    setSubjects((prev) => [result.data, ...prev]);
+                }
+
                 handleModalChange(false);
             } else {
                 toast.error(result.message);

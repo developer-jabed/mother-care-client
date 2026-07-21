@@ -45,6 +45,7 @@ export async function createSubject(prevState: any, formData: FormData) {
             return {
                 success: true,
                 message: "বিষয় সফলভাবে তৈরি হয়েছে!",
+                data: result.data, // 👈 add this — the created subject object
             };
         }
 
@@ -105,6 +106,7 @@ export async function updateSubject(id: number, prevState: any, formData: FormDa
             return {
                 success: true,
                 message: "বিষয় সফলভাবে হালনাগাদ হয়েছে!",
+                data: result.data, // 👈 add this — the updated subject object
             };
         }
 
