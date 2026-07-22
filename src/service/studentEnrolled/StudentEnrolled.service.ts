@@ -393,18 +393,21 @@ export interface RankedStudent {
     enrollmentId: number;
     name: string;
     currentRoll: number;
-    examsCounted: number;
+    hasResult: boolean;
     percentage: number | null;
     suggestedRoll: number;
 }
-
-// ---------- Get performance ranking ----------
 
 export async function getPerformanceRanking(params: {
     academicYearId: number;
     classId: number;
     sectionId: number;
-}): Promise<{ success: boolean; message?: string; data: RankedStudent[] }> {
+}): Promise<{
+    success: boolean;
+    message?: string;
+    examName?: string;
+    data: RankedStudent[];
+}> {
     try {
         const query = new URLSearchParams();
         query.set("academicYearId", String(params.academicYearId));
@@ -421,7 +424,11 @@ export async function getPerformanceRanking(params: {
             return { success: false, message: result.message || "তালিকা লোড করতে ব্যর্থ হয়েছে", data: [] };
         }
 
-        return { success: true, data: result.data };
+        return {
+            success: true,
+            examName: result.data.examName,
+            data: result.data.students,
+        };
     } catch (error: any) {
         console.error("Get performance ranking error:", error);
         return {
@@ -434,7 +441,6 @@ export async function getPerformanceRanking(params: {
         };
     }
 }
-
 // ---------- Bulk promote ----------
 
 export async function bulkPromoteStudents(prevState: any, formData: FormData): Promise<ActionResult> {

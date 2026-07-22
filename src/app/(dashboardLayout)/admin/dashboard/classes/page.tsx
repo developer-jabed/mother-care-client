@@ -51,7 +51,7 @@ export default async function ClassesSubjectsPage() {
                 </TabsList>
 
                 <TabsContent value="subjects" className="mt-6">
-                    <ClassesSubjectsClient initialSubjects={subjects} />
+                    <ClassesSubjectsClient initialSubjects={subjects} classes={classes} />
                 </TabsContent>
 
                 <TabsContent value="class-subjects" className="mt-6">

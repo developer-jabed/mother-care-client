@@ -17,6 +17,7 @@ export async function createSubject(prevState: any, formData: FormData) {
             passMarks: formData.get("passMarks") as string,
             credit: (formData.get("credit") as string) || undefined,
             isOptional: formData.get("isOptional") === "true",
+            classId: formData.get("classId") as string, // 👈 নতুন
         };
 
         const validated = zodValidator(validationPayload, createSubjectZodSchema);
@@ -41,11 +42,12 @@ export async function createSubject(prevState: any, formData: FormData) {
         if (result.success) {
             revalidateTag("subjects-list", "max");
             revalidateTag("admin-dashboard-meta", "max");
+            revalidateTag("class-subjects-list", "max"); // 👈 নতুন — auto-assign হওয়া class-subject লিস্টও রিভ্যালিডেট করুন
 
             return {
                 success: true,
                 message: "বিষয় সফলভাবে তৈরি হয়েছে!",
-                data: result.data, // 👈 add this — the created subject object
+                data: result.data,
             };
         }
 
@@ -106,7 +108,7 @@ export async function updateSubject(id: number, prevState: any, formData: FormDa
             return {
                 success: true,
                 message: "বিষয় সফলভাবে হালনাগাদ হয়েছে!",
-                data: result.data, // 👈 add this — the updated subject object
+                data: result.data,
             };
         }
 
@@ -137,6 +139,7 @@ export async function deleteSubject(id: number) {
         if (result.success) {
             revalidateTag("subjects-list", "max");
             revalidateTag("admin-dashboard-meta", "max");
+            revalidateTag("class-subjects-list", "max"); // 👈 নতুন
 
             return {
                 success: true,

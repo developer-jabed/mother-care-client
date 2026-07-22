@@ -19,6 +19,13 @@ import {
     AlertDialogCancel,
     AlertDialogAction,
 } from "@/components/ui/alert-dialog";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,13 +42,20 @@ import {
     Hash,
     Award,
     X,
+    GraduationCap,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { createSubject, deleteSubject, Subject, updateSubject } from "@/service/subject/subject.service";
 
+interface ClassOption {
+    id: number;
+    name: string;
+}
+
 interface ClassesSubjectsClientProps {
     initialSubjects: Subject[];
+    classes: ClassOption[];
 }
 
 const initialForm = {
@@ -51,10 +65,12 @@ const initialForm = {
     passMarks: "",
     credit: "",
     isOptional: false,
+    classId: "",
 };
 
 export default function ClassesSubjectsClient({
     initialSubjects,
+    classes = [],
 }: ClassesSubjectsClientProps) {
     const [subjects, setSubjects] = useState<Subject[]>(initialSubjects);
     const [search, setSearch] = useState("");
@@ -92,6 +108,7 @@ export default function ClassesSubjectsClient({
             passMarks: String(subject.passMarks),
             credit: subject.credit != null ? String(subject.credit) : "",
             isOptional: subject.isOptional,
+            classId: "", // edit mode-এ classId প্রযোজ্য না, কারণ subject-class সম্পর্ক ক্লাসSubject টেবিলে থাকে
         });
         setErrors({});
         setModalOpen(true);
@@ -117,6 +134,7 @@ export default function ClassesSubjectsClient({
         if (!form.name.trim()) nextErrors.name = "বিষয়ের নাম আবশ্যক";
         if (!form.fullMarks) nextErrors.fullMarks = "পূর্ণ নম্বর আবশ্যক";
         if (!form.passMarks) nextErrors.passMarks = "পাস নম্বর আবশ্যক";
+        if (!editingSubject && !form.classId) nextErrors.classId = "ক্লাস নির্বাচন করুন";
         if (
             form.fullMarks &&
             form.passMarks &&
@@ -138,6 +156,7 @@ export default function ClassesSubjectsClient({
             formData.append("passMarks", form.passMarks);
             if (form.credit) formData.append("credit", form.credit);
             formData.append("isOptional", String(form.isOptional));
+            if (!editingSubject) formData.append("classId", form.classId);
 
             const result = editingSubject
                 ? await updateSubject(editingSubject.id, null, formData)
@@ -147,12 +166,10 @@ export default function ClassesSubjectsClient({
                 toast.success(result.message);
 
                 if (editingSubject && result.data) {
-                    // update existing subject in place
                     setSubjects((prev) =>
                         prev.map((s) => (s.id === editingSubject.id ? result.data : s))
                     );
                 } else if (result.data) {
-                    // prepend newly created subject
                     setSubjects((prev) => [result.data, ...prev]);
                 }
 
@@ -274,7 +291,6 @@ export default function ClassesSubjectsClient({
                                     </div>
                                 </div>
 
-                                {/* Action buttons — appear on hover */}
                                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                     <button
                                         onClick={() => openEditModal(subject)}
@@ -333,6 +349,43 @@ export default function ClassesSubjectsClient({
                     </div>
 
                     <div className="p-6 space-y-4">
+                        {/* ক্লাস নির্বাচন — শুধুমাত্র তৈরির সময়, edit-এ প্রযোজ্য নয় */}
+                        {!editingSubject && (
+                            <div className="space-y-1.5">
+                                <Label htmlFor="classId" className="text-xs font-medium text-gray-600">
+                                    ক্লাস নির্বাচন করুন *
+                                </Label>
+                                <Select
+                                    value={form.classId}
+                                    onValueChange={(value) => handleChange("classId", value)}
+                                >
+                                    <SelectTrigger
+                                        id="classId"
+                                        className={cn(
+                                            "h-11 rounded-xl w-full",
+                                            errors.classId && "border-red-300 focus-visible:ring-red-500"
+                                        )}
+                                    >
+                                        <SelectValue placeholder="ক্লাস নির্বাচন করুন" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {classes.map((c) => (
+                                            <SelectItem key={c.id} value={String(c.id)}>
+                                                {c.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                {errors.classId && (
+                                    <p className="text-xs text-red-500">{errors.classId}</p>
+                                )}
+                                <p className="text-xs text-gray-400 flex items-center gap-1">
+                                    <GraduationCap className="h-3 w-3" />
+                                    নির্বাচিত ক্লাসের সকল শাখায় এই বিষয়টি স্বয়ংক্রিয়ভাবে যুক্ত হবে
+                                </p>
+                            </div>
+                        )}
+
                         <div className="grid grid-cols-2 gap-3">
                             <div className="space-y-1.5">
                                 <Label htmlFor="code" className="text-xs font-medium text-gray-600">

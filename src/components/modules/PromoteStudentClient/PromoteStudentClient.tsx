@@ -61,6 +61,7 @@ export default function PromoteStudentClient({ academicYears, classes }: Props) 
     const [students, setStudents] = useState<RankedStudent[]>([]);
     const [excluded, setExcluded] = useState<Set<number>>(new Set());
     const [loadError, setLoadError] = useState<string | null>(null);
+    const [examName, setExamName] = useState<string | null>(null);
 
     const [isPending, startTransition] = useTransition();
 
@@ -116,12 +117,15 @@ export default function PromoteStudentClient({ academicYears, classes }: Props) 
             if (!result.success) {
                 setLoadError(result.message || "শিক্ষার্থী তালিকা লোড করতে ব্যর্থ হয়েছে");
                 setStudents([]);
+                setExamName(null);
             } else if (result.data.length === 0) {
                 setLoadError("এই শ্রেণীতে কোনো শিক্ষার্থী পাওয়া যায়নি");
                 setStudents([]);
+                setExamName(null);
             } else {
                 setStudents(result.data);
                 setExcluded(new Set());
+                setExamName(result.examName ?? null);
             }
         });
     };
@@ -174,6 +178,7 @@ export default function PromoteStudentClient({ academicYears, classes }: Props) 
                 toast.success(result.message);
                 setStudents([]);
                 setExcluded(new Set());
+                setExamName(null);
             } else {
                 toast.error(result.message);
             }
@@ -259,9 +264,16 @@ export default function PromoteStudentClient({ academicYears, classes }: Props) 
             {students.length > 0 && (
                 <div className="border rounded-lg overflow-hidden">
                     <div className="flex items-center justify-between p-4 border-b bg-muted/30">
-                        <h3 className="font-bold text-base">
-                            ২. মেধাক্রম অনুযায়ী তালিকা ({students.length} জন)
-                        </h3>
+                        <div>
+                            <h3 className="font-bold text-base">
+                                ২. মেধাক্রম অনুযায়ী তালিকা ({students.length} জন)
+                            </h3>
+                            {examName && (
+                                <p className="text-xs font-medium text-muted-foreground mt-0.5">
+                                    ফলাফলের উৎস: {examName}
+                                </p>
+                            )}
+                        </div>
                         <span className="text-sm font-medium text-muted-foreground">
                             নির্বাচিত: {includedStudents.length} জন
                         </span>

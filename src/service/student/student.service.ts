@@ -12,7 +12,7 @@ export async function createStudent(prevState: any, formData: FormData) {
         const validationPayload = {
             email: formData.get("email") as string,
             password: formData.get("password") as string,
-            admissionNumber: formData.get("admissionNumber") as string,
+      
             fullName: formData.get("fullName") as string,
             gender: formData.get("gender") as string,
             dateOfBirth: formData.get("dateOfBirth") as string,
@@ -38,7 +38,7 @@ export async function createStudent(prevState: any, formData: FormData) {
                 password: data.password,
             },
             student: {
-                admissionNumber: data.admissionNumber,
+            
                 fullName: data.fullName,
                 gender: data.gender,
                 dateOfBirth: data.dateOfBirth,

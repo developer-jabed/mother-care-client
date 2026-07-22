@@ -8,6 +8,7 @@ export const createSubjectZodSchema = z
         passMarks: z.coerce.number({ error: "পাস নম্বর আবশ্যক" }).positive(),
         credit: z.coerce.number().optional(),
         isOptional: z.boolean().optional(),
+        classId: z.coerce.number({ error: "ক্লাস নির্বাচন করুন" }).int().positive({ error: "ক্লাস নির্বাচন করুন" }), // 👈 নতুন
     })
     .refine((data) => data.passMarks <= data.fullMarks, {
         error: "পাস নম্বর পূর্ণ নম্বরের চেয়ে বেশি হতে পারবে না",
