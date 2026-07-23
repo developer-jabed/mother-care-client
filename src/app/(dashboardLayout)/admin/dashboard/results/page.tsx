@@ -1,14 +1,17 @@
 import { getExams } from "@/service/exam/exam.service";
 import { getSubjects } from "@/service/subject/subject.service";
-import { getResults } from "@/service/result/result.service";
+import { getResults, getSectionWiseResults } from "@/service/result/result.service";
 import { ResultsClient } from "@/components/result/resultClient";
 import { getEnrollmentOptions } from "@/service/studentEnrolled/StudentEnrolled.service";
+
 export const dynamic = "force-dynamic"; // Important: Do NOT use force-static
 export const revalidate = 1000; // Revalidate every 1000 seconds (about 16.67 minutes)
 
 interface ResultsPageProps {
     searchParams: Promise<{
         examId?: string;
+        classId?: string;
+        sectionId?: string;
         page?: string;
         limit?: string;
         search?: string;
@@ -26,6 +29,8 @@ export default async function ResultsPage({ searchParams }: ResultsPageProps) {
     const page = Number(params.page) || 1;
     const limit = Number(params.limit) || 10;
     const examId = params.examId ? Number(params.examId) : undefined;
+    const classId = params.classId ? Number(params.classId) : undefined;
+    const sectionId = params.sectionId ? Number(params.sectionId) : undefined;
 
     const isPublished =
         params.isPublished === "true" ? true : params.isPublished === "false" ? false : undefined;
@@ -37,7 +42,9 @@ export default async function ResultsPage({ searchParams }: ResultsPageProps) {
 
     const selectedExam = examId ? examsResult.data.find((exam) => exam.id === examId) : undefined;
 
-    const [resultsResult, enrollments] = await Promise.all([
+    const hasFullSectionSelection = Boolean(examId && classId && sectionId);
+
+    const [resultsResult, enrollments, sectionResultsResult] = await Promise.all([
         examId
             ? getResults({
                 examId,
@@ -50,6 +57,9 @@ export default async function ResultsPage({ searchParams }: ResultsPageProps) {
         selectedExam
             ? getEnrollmentOptions({ academicYearId: selectedExam.academicYearId })
             : Promise.resolve([]),
+        hasFullSectionSelection
+            ? getSectionWiseResults({ examId: examId!, classId: classId!, sectionId: sectionId! })
+            : Promise.resolve({ success: true, data: null }),
     ]);
 
     return (
@@ -68,7 +78,10 @@ export default async function ResultsPage({ searchParams }: ResultsPageProps) {
                 meta={resultsResult.meta}
                 subjects={subjectsResult.data}
                 enrollments={enrollments}
+                sectionResults={sectionResultsResult.data}
                 filters={{
+                    classId: params.classId ?? "",
+                    sectionId: params.sectionId ?? "",
                     search: params.search ?? "",
                     isPublished: params.isPublished ?? "",
                 }}

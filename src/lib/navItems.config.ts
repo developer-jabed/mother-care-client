@@ -8,7 +8,7 @@ export const getCommonNavItems = (role: UserRole): NavSection[] => {
             items: [
                 { title: "হোম", href: "/", icon: "Home", roles: ["STUDENT", "CR", "TEACHER", "ADMIN"] },
                 { title: "ড্যাশবোর্ড", href: defaultDashboard, icon: "LayoutDashboard", roles: ["STUDENT", "CR", "TEACHER", "ADMIN"] },
-              
+
             ],
         },
         {
@@ -65,10 +65,12 @@ export const adminNavItems: NavSection[] = [
             { title: "শিক্ষাবর্ষ, ক্লাস ও শাখা", href: "/admin/dashboard/academic-structure", icon: "School", roles: ["ADMIN"] },
             { title: "বিষয়সমূহ", href: "/admin/dashboard/classes", icon: "School", roles: ["ADMIN"] },
             { title: "পরীক্ষা", href: "/admin/dashboard/exams", icon: "User", roles: ["ADMIN"] },
+            { title: "পরীক্ষার সময়সূচী", href: "/admin/dashboard/exam-schedules", icon: "CalendarClock", roles: ["ADMIN"] },
             { title: "রেজাল্ট", href: "/admin/dashboard/results", icon: "User", roles: ["ADMIN"] },
             { title: "গ্রেডিং স্কেল", href: "/admin/dashboard/grading-scales", icon: "User", roles: ["ADMIN"] },
             { title: "এসএমএস", href: "/admin/dashboard/sms", icon: "User", roles: ["ADMIN"] },
-            { title : "শিক্ষার্থী উত্তীর্ণ", href: "/admin/dashboard/student-promote", icon: "User", roles: ["ADMIN"] },
+            { title: "শিক্ষার্থী উত্তীর্ণ", href: "/admin/dashboard/student-promote", icon: "User", roles: ["ADMIN"] },
+            { title: "প্রবেশপত্র", href: "/admin/dashboard/admit-cards", icon: "FileText", roles: ["ADMIN"] },
         ],
     },
 ];

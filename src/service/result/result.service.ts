@@ -202,11 +202,19 @@ export async function publishResult(id: number, isPublished: boolean): Promise<A
     }
 }
 
-export async function calculatePositions(examId: number): Promise<ActionState> {
+export async function calculatePositions(
+    examId: number,
+    classId: number,
+    sectionId: number
+): Promise<ActionState> {
     try {
-        const response = await serverFetch.post(`/results/exam/${examId}/calculate-positions`, {
-            headers: { "Content-Type": "application/json" },
-        });
+        const response = await serverFetch.post(
+            `/results/exam/${examId}/calculate-positions?classId=${classId}&sectionId=${sectionId}`,
+            {
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({}),
+            }
+        );
 
         const result = await response.json();
 
@@ -233,6 +241,45 @@ export async function calculatePositions(examId: number): Promise<ActionState> {
                     ? error.message
                     : "কিছু একটা ভুল হয়েছে। আবার চেষ্টা করুন।",
         };
+    }
+}
+
+export interface CombinedRankingRow {
+    studentEnrollmentId: number;
+    rollNumber: number | null;
+    name: string;
+    examCount: number;
+    averagePercentage: number | null;
+    rank: number | null;
+}
+
+export interface CombinedRankingResponse {
+    totalStudents: number;
+    examCount: number;
+    data: CombinedRankingRow[];
+}
+
+export async function getCombinedRanking(params: {
+    classId: number;
+    sectionId: number;
+    examIds?: number[];
+}): Promise<{ success: boolean; data: CombinedRankingResponse | null }> {
+    try {
+        const searchParams = new URLSearchParams({
+            classId: String(params.classId),
+            sectionId: String(params.sectionId),
+        });
+        if (params.examIds && params.examIds.length > 0) {
+            searchParams.set("examIds", params.examIds.join(","));
+        }
+
+        const response = await serverFetch.get(`/results/combined-ranking?${searchParams.toString()}`);
+        const result = await response.json();
+
+        return { success: result.success, data: result.data ?? null };
+    } catch (error) {
+        console.error("Get combined ranking error:", error);
+        return { success: false, data: null };
     }
 }
 
@@ -273,6 +320,8 @@ export async function deleteResult(id: number): Promise<ActionState> {
 
 interface GetResultsParams {
     examId?: number;
+    classId?: number;
+    sectionId?: number;
     studentEnrollmentId?: number;
     isPublished?: boolean;
     searchTerm?: string;
@@ -287,6 +336,8 @@ export async function getResults(params: GetResultsParams = {}): Promise<{
     try {
         const query = new URLSearchParams();
         if (params.examId) query.set("examId", String(params.examId));
+        if (params.classId) query.set("classId", String(params.classId));
+        if (params.sectionId) query.set("sectionId", String(params.sectionId));
         if (params.studentEnrollmentId) query.set("studentEnrollmentId", String(params.studentEnrollmentId));
         if (params.isPublished !== undefined) query.set("isPublished", String(params.isPublished));
         if (params.searchTerm) query.set("searchTerm", params.searchTerm);
@@ -308,6 +359,70 @@ export async function getResults(params: GetResultsParams = {}): Promise<{
     } catch (error) {
         console.error("Get results error:", error);
         return { data: [], meta: null };
+    }
+}
+
+
+
+
+export interface SectionResultRow {
+    studentEnrollmentId: number;
+    studentId: number;
+    name: string;
+    rollNumber: string;
+    hasResult: boolean;
+    resultId: number | null;
+    totalMarks: number | null;
+    percentage: number | null;
+    grade: string | null;
+    gradePoint: number | null;
+    isPublished: boolean;
+    position: number | null;
+    rank: number | null;
+    details: unknown[];
+}
+
+export interface SectionResultResponse {
+    examId: number;
+    examName: string;
+    classId: number;
+    sectionId: number;
+    totalStudents: number;
+    data: SectionResultRow[];
+}
+
+export async function getSectionWiseResults(params: {
+    examId: number;
+    classId: number;
+    sectionId: number;
+}): Promise<{ success: boolean; message?: string; data: SectionResultResponse | null }> {
+    try {
+        const query = new URLSearchParams();
+        query.set("examId", String(params.examId));
+        query.set("classId", String(params.classId));
+        query.set("sectionId", String(params.sectionId));
+
+        const response = await serverFetch.get(`/results/section-result?${query.toString()}`, {
+            next: { tags: ["results-list"] },
+        });
+
+        const result = await response.json();
+
+        if (!result.success) {
+            return { success: false, message: result.message, data: null };
+        }
+
+        return { success: true, data: result.data };
+    } catch (error: any) {
+        console.error("Get section-wise results error:", error);
+        return {
+            success: false,
+            message:
+                process.env.NODE_ENV === "development"
+                    ? error.message
+                    : "কিছু একটা ভুল হয়েছে। আবার চেষ্টা করুন।",
+            data: null,
+        };
     }
 }
 
