@@ -11,7 +11,7 @@ export interface FailedAdmitCard {
     reason: string;
 }
 
-export interface AdmitCardSectionResult {
+export interface AdmitCardResult {
     mode: "queued" | "direct";
     jobId?: string;
     fileUrl?: string;
@@ -30,11 +30,64 @@ export interface AdmitCardJobStatus {
     error?: string;
 }
 
-export async function generateSectionAdmitCards(
-    examId: number,
-    classId: number,
-    sectionId: number
-) {
+export interface VerifyResult {
+    valid: boolean;
+    studentName?: string;
+    admissionNumber?: string;
+    photo?: string | null;
+    rollNumber?: number;
+    className?: string;
+    sectionName?: string;
+    examName?: string;
+}
+
+function handleError(error: any, label: string) {
+    console.error(`${label} error:`, error);
+    return {
+        success: false as const,
+        message:
+            process.env.NODE_ENV === "development"
+                ? error.message
+                : "কিছু একটা ভুল হয়েছে। আবার চেষ্টা করুন।",
+    };
+}
+
+/**
+ * GET /admit-cards/single?studentEnrollmentId=&examId=
+ * Backend streams a raw PDF for this route (not JSON), so this returns a
+ * blob URL the client can open/download directly.
+ */
+export async function generateSingleAdmitCard(studentEnrollmentId: number, examId: number) {
+    try {
+        const searchParams = new URLSearchParams({
+            studentEnrollmentId: String(studentEnrollmentId),
+            examId: String(examId),
+        });
+
+        const response = await serverFetch.get(`/admit-cards/single?${searchParams.toString()}`);
+
+        if (!response.ok) {
+            const errorBody = await response.json().catch(() => null);
+            return {
+                success: false,
+                message: errorBody?.message || "প্রবেশপত্র তৈরি করতে ব্যর্থ হয়েছে",
+            };
+        }
+
+        const arrayBuffer = await response.arrayBuffer();
+        const base64 = Buffer.from(arrayBuffer).toString("base64");
+
+        return {
+            success: true,
+            message: "প্রবেশপত্র তৈরি হয়েছে!",
+            data: { pdfBase64: base64 },
+        };
+    } catch (error: any) {
+        return handleError(error, "Generate single admit card");
+    }
+}
+
+export async function generateSectionAdmitCards(examId: number, classId: number, sectionId: number) {
     try {
         const searchParams = new URLSearchParams({
             examId: String(examId),
@@ -47,28 +100,16 @@ export async function generateSectionAdmitCards(
 
         if (result.success) {
             revalidateTag("admit-cards-list", "max");
-
             return {
                 success: true,
                 message: result.message || "প্রবেশপত্র তৈরি শুরু হয়েছে!",
-                data: result.data as AdmitCardSectionResult,
+                data: result.data as AdmitCardResult,
             };
         }
 
-        return {
-            success: false,
-            message: result.message || "প্রবেশপত্র তৈরি করতে ব্যর্থ হয়েছে",
-        };
+        return { success: false, message: result.message || "প্রবেশপত্র তৈরি করতে ব্যর্থ হয়েছে" };
     } catch (error: any) {
-        console.error("Generate section admit cards error:", error);
-
-        return {
-            success: false,
-            message:
-                process.env.NODE_ENV === "development"
-                    ? error.message
-                    : "কিছু একটা ভুল হয়েছে। আবার চেষ্টা করুন।",
-        };
+        return handleError(error, "Generate section admit cards");
     }
 }
 
@@ -88,28 +129,16 @@ export async function retryFailedAdmitCards(
 
         if (result.success) {
             revalidateTag("admit-cards-list", "max");
-
             return {
                 success: true,
                 message: result.message || "পুনরায় চেষ্টা শুরু হয়েছে!",
-                data: result.data as AdmitCardSectionResult,
+                data: result.data as AdmitCardResult,
             };
         }
 
-        return {
-            success: false,
-            message: result.message || "পুনরায় চেষ্টা ব্যর্থ হয়েছে",
-        };
+        return { success: false, message: result.message || "পুনরায় চেষ্টা ব্যর্থ হয়েছে" };
     } catch (error: any) {
-        console.error("Retry failed admit cards error:", error);
-
-        return {
-            success: false,
-            message:
-                process.env.NODE_ENV === "development"
-                    ? error.message
-                    : "কিছু একটা ভুল হয়েছে। আবার চেষ্টা করুন।",
-        };
+        return handleError(error, "Retry failed admit cards");
     }
 }
 
@@ -126,19 +155,27 @@ export async function getAdmitCardJobStatus(jobId: string) {
             };
         }
 
-        return {
-            success: false,
-            message: result.message || "স্ট্যাটাস পাওয়া যায়নি",
-        };
+        return { success: false, message: result.message || "স্ট্যাটাস পাওয়া যায়নি" };
     } catch (error: any) {
-        console.error("Get admit card job status error:", error);
+        return handleError(error, "Get admit card job status");
+    }
+}
 
-        return {
-            success: false,
-            message:
-                process.env.NODE_ENV === "development"
-                    ? error.message
-                    : "কিছু একটা ভুল হয়েছে। আবার চেষ্টা করুন।",
-        };
+export async function verifyAdmitCard(enrollmentId: number, examId: number) {
+    try {
+        const response = await serverFetch.get(`/admit-cards/verify/${enrollmentId}/${examId}`);
+        const result = await response.json();
+
+        if (result.success) {
+            return {
+                success: true,
+                message: result.message || "যাচাই সম্পন্ন",
+                data: result.data as VerifyResult,
+            };
+        }
+
+        return { success: false, message: result.message || "প্রবেশপত্র যাচাই করা যায়নি" };
+    } catch (error: any) {
+        return handleError(error, "Verify admit card");
     }
 }

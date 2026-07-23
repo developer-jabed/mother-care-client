@@ -20,6 +20,8 @@ export default async function ExamSchedulesPage() {
         getEnrollmentOptions({}),
     ]);
 
+
+    console.log(schedulesResult);
     const classMap = new Map<number, ClassOption>();
     enrollments.forEach((e: any) => {
         if (!classMap.has(e.classId)) {
