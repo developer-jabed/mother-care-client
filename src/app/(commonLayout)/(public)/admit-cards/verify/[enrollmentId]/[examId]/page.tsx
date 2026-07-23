@@ -4,7 +4,13 @@ import { CheckCircle2, XCircle } from "lucide-react";
 
 interface PageProps {
     params: Promise<{ enrollmentId: string; examId: string }>;
+
+
 }
+
+export const dynamic = "force-dynamic"; // Important: Do NOT use force-static
+export const revalidate = 1000; // Revalidate every 1000 seconds (about 16.67 minutes)
+
 
 export const metadata = {
     title: "প্রবেশপত্র যাচাই",

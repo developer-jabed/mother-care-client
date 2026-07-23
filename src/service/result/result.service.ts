@@ -161,6 +161,75 @@ export async function updateResult(id: number, payload: UpdateResultPayload): Pr
     }
 }
 
+export interface ResultDetailRow {
+    subjectId: number;
+    writtenMarks: number | null;
+    mcqMarks: number | null;
+    practicalMarks: number | null;
+    vivaMarks: number | null;
+    totalMarks: number;
+    grade: string;
+    gradePoint: number;
+    subject: { id: number; name: string; fullMarks: number };
+}
+
+export interface ResultByRollRow {
+    id: number;
+    totalMarks: number;
+    percentage: number;
+    grade: string;
+    gradePoint: number;
+    position: number | null;
+    isPublished: boolean;
+    exam: { id: number; name: string };
+    details: ResultDetailRow[];
+}
+
+export interface ResultsByRollResponse {
+    student: {
+        fullName: string;
+        admissionNumber: string;
+        fatherName: string | null;
+        motherName: string | null;
+        gender: string;
+        dateOfBirth: string; // ISO date string over the wire
+        phone: string | null;
+        address: string | null;
+        photo: string | null;
+        rollNumber: number;
+        className: string;
+        sectionName: string;
+    };
+    results: ResultByRollRow[];
+}
+
+export async function getResultsByRoll(classId: number, sectionId: number, roll: number, examId?: number) {
+    try {
+        const query = examId ? `?examId=${examId}` : "";
+        const response = await serverFetch.get(`/results/by-roll/${classId}/${sectionId}/${roll}${query}`);
+        const result = await response.json();
+
+        if (result.success) {
+            return {
+                success: true as const,
+                message: result.message,
+                data: result.data as ResultsByRollResponse,
+            };
+        }
+
+        return { success: false as const, message: result.message || "ফলাফল পাওয়া যায়নি" };
+    } catch (error: any) {
+        console.error("Get results by roll error:", error);
+        return {
+            success: false as const,
+            message:
+                process.env.NODE_ENV === "development"
+                    ? error.message
+                    : "কিছু একটা ভুল হয়েছে। আবার চেষ্টা করুন।",
+        };
+    }
+}
+
 export async function publishResult(id: number, isPublished: boolean): Promise<ActionState> {
     try {
         const response = await serverFetch.patch(`/results/${id}/publish`, {
