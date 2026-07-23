@@ -6,6 +6,8 @@ export const createStudentZodSchema = z.object({
     .string({ error: "Password is required" })
     .min(6, { error: "Password must be at least 6 characters" }),
   fullName: z.string({ error: "Full name is required" }),
+  fatherName: z.string().optional(),   // ✅ NEW
+  motherName: z.string().optional(),   // ✅ NEW
   gender: z.enum(["MALE", "FEMALE", "OTHER"], { error: "Gender is required" }),
   dateOfBirth: z.string({ error: "Date of birth is required" }),
   phone: z.string().optional(),

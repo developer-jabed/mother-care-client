@@ -6,14 +6,15 @@ import { zodValidator } from "@/lib/zodValidator";
 import { createStudentZodSchema } from "@/zod/student.validation";
 import { revalidateTag } from "next/cache";
 import { StudentEnrollment } from "../studentEnrolled/StudentEnrolled.service";
-
 export async function createStudent(prevState: any, formData: FormData) {
     try {
         const validationPayload = {
             email: formData.get("email") as string,
             password: formData.get("password") as string,
-      
+
             fullName: formData.get("fullName") as string,
+            fatherName: formData.get("fatherName") as string,   // ✅ NEW
+            motherName: formData.get("motherName") as string,   // ✅ NEW
             gender: formData.get("gender") as string,
             dateOfBirth: formData.get("dateOfBirth") as string,
             phone: formData.get("phone") as string,
@@ -38,8 +39,9 @@ export async function createStudent(prevState: any, formData: FormData) {
                 password: data.password,
             },
             student: {
-            
                 fullName: data.fullName,
+                fatherName: data.fatherName,   // ✅ NEW
+                motherName: data.motherName,   // ✅ NEW
                 gender: data.gender,
                 dateOfBirth: data.dateOfBirth,
                 phone: data.phone,
@@ -120,7 +122,9 @@ export interface Student {
     userId: number | null;
     admissionNumber: string;
     fullName: string;
-    gender: "MALE" | "FEMALE" | "OTHER"; // match your Gender enum
+    fatherName: string | null;   // ✅ NEW
+    motherName: string | null;   // ✅ NEW
+    gender: "MALE" | "FEMALE" | "OTHER";
     dateOfBirth: string;
     phone: string | null;
     address: string | null;
@@ -250,7 +254,7 @@ export async function updateStudent(prevState: any, formData: FormData) {
         if (!id) return { success: false, message: "Student ID is required" };
 
         const payload: Record<string, any> = {};
-        const fields = ["fullName", "gender", "dateOfBirth", "phone", "address"];
+        const fields = ["fullName", "fatherName", "motherName", "gender", "dateOfBirth", "phone", "address"];   // ✅ UPDATED
 
         for (const field of fields) {
             const val = formData.get(field);

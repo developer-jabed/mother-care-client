@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import {
     UserPlus, Loader2, Camera, User, Hash,
     Users as GenderIcon, Calendar, Mail, Lock, X, Check,
-    Phone, MapPin, Eye, EyeOff,
+    Phone, MapPin, Eye, EyeOff, UserCheck, // ✅ NEW icon for parent names
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,7 +45,7 @@ export default function EnrollStudentModal() {
             const result = await createStudent(null, formData);
 
             if (result.success) {
-                toast.success(result.message || "শিক্ষার্থী সফলভাবে ভর্তি হয়েছে");
+                toast.success(result.message || "শিক্ষার্থী সফলভাবে ভর্তি হয়েছে");
                 formRef.current?.reset();
                 setPhotoPreview(null);
                 setShowPassword(false);
@@ -55,7 +55,7 @@ export default function EnrollStudentModal() {
                     router.push(`students/${result.studentId}?justCreated=1`);
                 }
             } else {
-                toast.error(result.message || "ভর্তি করতে ব্যর্থ হয়েছে");
+                toast.error(result.message || "ভর্তি করতে ব্যর্থ হয়েছে");
                 setErrors(result.errors || {});
             }
         });
@@ -141,22 +141,21 @@ export default function EnrollStudentModal() {
                                 {errors?.fullName && <p className="text-xs text-red-500 mt-1">{errors.fullName[0]}</p>}
                             </div>
 
+                            {/* ✅ NEW: Father & Mother name */}
                             <div className="grid grid-cols-2 gap-4">
-                                {/* <div>
-                                    <Label htmlFor="admissionNumber">ভর্তি নম্বর *</Label>
-                                    <Input
-                                        id="admissionNumber"
-                                        name="admissionNumber"
-                                        placeholder="স্বয়ংক্রিয়ভাবে তৈরি হবে"
-                                        readOnly
-                                        className="bg-gray-50 text-gray-600 cursor-not-allowed"
-                                    />
-                                    <p className="text-xs text-gray-500 mt-1">
-                                        পরবর্তী ভর্তি নম্বর স্বয়ংক্রিয়ভাবে নির্ধারিত হবে
-                                    </p>
-                                    {errors?.admissionNumber && <p className="text-xs text-red-500 mt-1">{errors.admissionNumber[0]}</p>}
-                                </div> */}
+                                <div>
+                                    <Label htmlFor="fatherName">পিতার নাম</Label>
+                                    <Input id="fatherName" name="fatherName" placeholder="মোঃ করিম উদ্দিন" />
+                                    {errors?.fatherName && <p className="text-xs text-red-500 mt-1">{errors.fatherName[0]}</p>}
+                                </div>
+                                <div>
+                                    <Label htmlFor="motherName">মাতার নাম</Label>
+                                    <Input id="motherName" name="motherName" placeholder="মোছাঃ রহিমা বেগম" />
+                                    {errors?.motherName && <p className="text-xs text-red-500 mt-1">{errors.motherName[0]}</p>}
+                                </div>
+                            </div>
 
+                            <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <Label htmlFor="gender">লিঙ্গ *</Label>
                                     <Select name="gender" required>
@@ -170,11 +169,11 @@ export default function EnrollStudentModal() {
                                         </SelectContent>
                                     </Select>
                                 </div>
-                            </div>
 
-                            <div>
-                                <Label htmlFor="dateOfBirth">জন্ম তারিখ *</Label>
-                                <Input id="dateOfBirth" name="dateOfBirth" type="date" required />
+                                <div>
+                                    <Label htmlFor="dateOfBirth">জন্ম তারিখ *</Label>
+                                    <Input id="dateOfBirth" name="dateOfBirth" type="date" required />
+                                </div>
                             </div>
                         </div>
                     </div>
