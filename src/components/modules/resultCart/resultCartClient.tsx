@@ -27,7 +27,7 @@ import {
     getResultCardBatchStatus,
     generateSingleResultCard,
     type ResultCardJobStatus,
-} from "@/service/resultCart/resultCart.service"; // ← adjust path if needed
+} from "@/service/resultCart/resultCart.service";
 
 export interface ExamOption {
     id: number;
@@ -54,16 +54,14 @@ type FailedItem = {
     reason: string;
 };
 
-const POLL_INTERVAL_MS = 2500;
-const MAX_POLL_ATTEMPTS = 48; // 48 * 2.5s = 2 minutes max
+const POLL_INTERVAL_MS = 2000;
+const MAX_POLL_ATTEMPTS = 60; // ~2 min
 
 export function ResultCardStudio({ exams, classes }: ResultCardStudioProps) {
     const [examId, setExamId] = useState<number | null>(null);
     const [classId, setClassId] = useState<number | null>(null);
     const [sectionId, setSectionId] = useState<number | null>(null);
-
-    // Optional single-student mode
-    const [singleEnrollmentId, setSingleEnrollmentId] = useState<string>("");
+    const [singleEnrollmentId, setSingleEnrollmentId] = useState("");
 
     const [state, setState] = useState<GenerationState>("idle");
     const [isRetrying, setIsRetrying] = useState(false);
@@ -71,20 +69,23 @@ export function ResultCardStudio({ exams, classes }: ResultCardStudioProps) {
     const [failed, setFailed] = useState<FailedItem[]>([]);
     const [summary, setSummary] = useState<{ total: number; success: number } | null>(null);
 
-    const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    // Use timeout chain (not setInterval) so polls never overlap
+    const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const activeJobIdRef = useRef<string | null>(null);
     const attemptsRef = useRef(0);
+    const stoppedRef = useRef(false);
 
     const stopPolling = () => {
-        if (pollRef.current) {
-            clearInterval(pollRef.current);
-            pollRef.current = null;
-        }
+        stoppedRef.current = true;
         activeJobIdRef.current = null;
         attemptsRef.current = 0;
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+            timeoutRef.current = null;
+        }
     };
 
-    // ✅ Correct cleanup — stops the interval when the component unmounts
+    // Always clear on unmount
     useEffect(() => {
         return () => stopPolling();
     }, []);
@@ -94,15 +95,13 @@ export function ResultCardStudio({ exams, classes }: ResultCardStudioProps) {
         [classes, classId]
     );
 
+    const busy = state === "generating" || state === "queued";
+
     const canGenerate =
-        Boolean(examId && classId && sectionId) &&
-        state !== "generating" &&
-        state !== "queued";
+        Boolean(examId && classId && sectionId) && !busy;
 
     const canGenerateSingle =
-        Boolean(examId && singleEnrollmentId.trim()) &&
-        state !== "generating" &&
-        state !== "queued";
+        Boolean(examId && singleEnrollmentId.trim()) && !busy;
 
     const resetResult = () => {
         setFileUrl(null);
@@ -134,35 +133,57 @@ export function ResultCardStudio({ exams, classes }: ResultCardStudioProps) {
         }
     };
 
+    /**
+     * Sequential poll — schedules the next tick only after the current
+     * request finishes. Stops immediately on completed / failed / max attempts.
+     */
     const pollJob = (
         jobId: string,
         onDone: (data: ResultCardJobStatus["result"]) => void,
         onFail: (msg: string) => void
     ) => {
-        // Stop any previous polling before starting a new one
         stopPolling();
+        stoppedRef.current = false;
         activeJobIdRef.current = jobId;
         attemptsRef.current = 0;
 
-        pollRef.current = setInterval(async () => {
-            if (activeJobIdRef.current !== jobId) return;
+        const tick = async () => {
+            if (stoppedRef.current || activeJobIdRef.current !== jobId) return;
 
             attemptsRef.current += 1;
 
             try {
                 const res = await getResultCardBatchStatus(jobId);
 
-                if (activeJobIdRef.current !== jobId) return;
+                // Aborted while in-flight
+                if (stoppedRef.current || activeJobIdRef.current !== jobId) return;
 
-                if (!res.success || !res.data) {
+                if (!res?.success || !res.data) {
                     if (attemptsRef.current >= MAX_POLL_ATTEMPTS) {
                         stopPolling();
                         onFail("জব স্ট্যাটাস পাওয়া যায়নি — সময় শেষ");
+                    } else {
+                        timeoutRef.current = setTimeout(tick, POLL_INTERVAL_MS);
                     }
                     return;
                 }
 
-                const { state: jobState, result, failedReason } = res.data;
+                // Support a few possible shapes from the API wrapper
+                const payload = res.data as any;
+                const jobState: string =
+                    payload.state ??
+                    payload.jobState ??
+                    payload.status ??
+                    "";
+
+                const result =
+                    payload.result ??
+                    payload.returnvalue ??
+                    payload.data ??
+                    undefined;
+
+                const failedReason: string | undefined =
+                    payload.failedReason ?? payload.failed_reason ?? undefined;
 
                 if (jobState === "completed") {
                     stopPolling();
@@ -176,24 +197,36 @@ export function ResultCardStudio({ exams, classes }: ResultCardStudioProps) {
                     return;
                 }
 
+                // waiting | active | delayed | unknown
                 if (attemptsRef.current >= MAX_POLL_ATTEMPTS) {
                     stopPolling();
                     onFail(
                         "সময় শেষ — রেজাল্ট কার্ড তৈরি হতে বেশি সময় লাগছে। পরে আবার চেষ্টা করুন।"
                     );
+                    return;
                 }
+
+                timeoutRef.current = setTimeout(tick, POLL_INTERVAL_MS);
             } catch {
+                if (stoppedRef.current || activeJobIdRef.current !== jobId) return;
+
                 if (attemptsRef.current >= MAX_POLL_ATTEMPTS) {
                     stopPolling();
                     onFail("নেটওয়ার্ক ত্রুটি — আবার চেষ্টা করুন");
+                } else {
+                    timeoutRef.current = setTimeout(tick, POLL_INTERVAL_MS);
                 }
             }
-        }, POLL_INTERVAL_MS);
+        };
+
+        // First poll after a short delay (job may still be enqueueing)
+        timeoutRef.current = setTimeout(tick, 800);
     };
 
-    // ─── Batch generation ───────────────────────────────────────────────
+    // ─── Batch ──────────────────────────────────────────────────────────
     const handleGenerate = async () => {
         if (!examId || !classId || !sectionId) return;
+        stopPolling();
         resetResult();
         setState("generating");
 
@@ -212,7 +245,7 @@ export function ResultCardStudio({ exams, classes }: ResultCardStudioProps) {
         if (response.mode === "queued") {
             setState("queued");
             pollJob(
-                response.jobId,
+                String(response.jobId),
                 (result) => {
                     applyResult({
                         fileUrl: result?.fileUrl,
@@ -282,7 +315,7 @@ export function ResultCardStudio({ exams, classes }: ResultCardStudioProps) {
 
         if (response.mode === "queued") {
             pollJob(
-                response.jobId,
+                String(response.jobId),
                 (result) =>
                     finish({
                         fileUrl: result?.fileUrl,
@@ -303,9 +336,10 @@ export function ResultCardStudio({ exams, classes }: ResultCardStudioProps) {
         }
     };
 
-    // ─── Single student ─────────────────────────────────────────────────
+    // ─── Single ─────────────────────────────────────────────────────────
     const handleSingleGenerate = async () => {
         if (!examId || !singleEnrollmentId.trim()) return;
+        stopPolling();
         resetResult();
         setState("generating");
 
@@ -333,7 +367,6 @@ export function ResultCardStudio({ exams, classes }: ResultCardStudioProps) {
 
     return (
         <div className="result-studio">
-            {/* ───────── Request card ───────── */}
             <section className="request-card">
                 <div className="request-card__eyebrow">নথি অনুরোধ</div>
                 <h2 className="request-card__title">রেজাল্ট কার্ড ইস্যু করুন</h2>
@@ -417,7 +450,7 @@ export function ResultCardStudio({ exams, classes }: ResultCardStudioProps) {
                     onClick={handleGenerate}
                     disabled={!canGenerate}
                 >
-                    {state === "generating" || state === "queued" ? (
+                    {busy ? (
                         <>
                             <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
                             {state === "queued"
@@ -462,7 +495,6 @@ export function ResultCardStudio({ exams, classes }: ResultCardStudioProps) {
                 </div>
             </section>
 
-            {/* ───────── Result / ledger ───────── */}
             {summary && (
                 <section className="ledger">
                     <div className="ledger__head">
@@ -577,12 +609,10 @@ export function ResultCardStudio({ exams, classes }: ResultCardStudioProps) {
                         system-ui, sans-serif;
                     color: var(--ink);
                 }
-
                 .mono {
                     font-family: "IBM Plex Mono", ui-monospace, monospace;
                     font-variant-numeric: tabular-nums;
                 }
-
                 .request-card {
                     position: relative;
                     background: var(--paper-raised);
@@ -636,7 +666,6 @@ export function ResultCardStudio({ exams, classes }: ResultCardStudioProps) {
                         grid-template-columns: 1fr;
                     }
                 }
-
                 .issue-button {
                     display: inline-flex;
                     align-items: center;
@@ -648,9 +677,8 @@ export function ResultCardStudio({ exams, classes }: ResultCardStudioProps) {
                     padding: 12px 22px;
                     font-size: 14px;
                     font-weight: 600;
-                    letter-spacing: 0.01em;
                     cursor: pointer;
-                    transition: background-color 0.15s ease, transform 0.15s ease;
+                    transition: background-color 0.15s ease;
                 }
                 .issue-button:hover:not(:disabled) {
                     background: #0f151d;
@@ -658,10 +686,6 @@ export function ResultCardStudio({ exams, classes }: ResultCardStudioProps) {
                 .issue-button:disabled {
                     background: #b7bcc2;
                     cursor: not-allowed;
-                }
-                .issue-button:focus-visible {
-                    outline: 2px solid var(--brass);
-                    outline-offset: 2px;
                 }
                 .issue-button--outline {
                     background: transparent;
@@ -672,7 +696,6 @@ export function ResultCardStudio({ exams, classes }: ResultCardStudioProps) {
                     background: var(--ink);
                     color: var(--paper);
                 }
-
                 .single-divider {
                     display: flex;
                     align-items: center;
@@ -709,7 +732,6 @@ export function ResultCardStudio({ exams, classes }: ResultCardStudioProps) {
                     border-color: var(--brass);
                     box-shadow: 0 0 0 2px rgba(176, 141, 87, 0.2);
                 }
-
                 .ledger {
                     background: var(--paper-raised);
                     border: 1px solid var(--hairline);
@@ -758,7 +780,6 @@ export function ResultCardStudio({ exams, classes }: ResultCardStudioProps) {
                     color: var(--ink-soft);
                     margin-left: 4px;
                 }
-
                 .seal {
                     display: flex;
                     align-items: center;
@@ -781,7 +802,6 @@ export function ResultCardStudio({ exams, classes }: ResultCardStudioProps) {
                     color: var(--brick);
                     background: var(--brick-bg);
                 }
-
                 .download-link {
                     display: inline-flex;
                     align-items: center;
@@ -796,7 +816,6 @@ export function ResultCardStudio({ exams, classes }: ResultCardStudioProps) {
                 .download-link:hover {
                     border-bottom-color: var(--brass-deep);
                 }
-
                 .failed-block {
                     margin-top: 20px;
                     padding-top: 20px;
@@ -814,7 +833,6 @@ export function ResultCardStudio({ exams, classes }: ResultCardStudioProps) {
                     font-weight: 600;
                     color: var(--brick);
                 }
-
                 .failed-table {
                     width: 100%;
                     border-collapse: collapse;
@@ -831,7 +849,7 @@ export function ResultCardStudio({ exams, classes }: ResultCardStudioProps) {
                     border-bottom: 1px solid var(--hairline);
                 }
                 .failed-table td {
-                    padding: 10px 10px;
+                    padding: 10px;
                     border-bottom: 1px solid var(--hairline);
                     vertical-align: top;
                 }
@@ -841,12 +859,6 @@ export function ResultCardStudio({ exams, classes }: ResultCardStudioProps) {
                 .failed-table__reason {
                     color: var(--ink-soft);
                     font-size: 12.5px;
-                }
-
-                @media (prefers-reduced-motion: reduce) {
-                    .issue-button {
-                        transition: none;
-                    }
                 }
             `}</style>
         </div>
