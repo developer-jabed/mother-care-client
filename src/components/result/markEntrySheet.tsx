@@ -1,245 +1,310 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { Loader2, Save } from "lucide-react";
+import { Loader2, Save, CheckCircle2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 
 import {
-    createResult,
-    updateResult,
-    type Result,
-    type ResultDetailPayload,
+  createResult,
+  updateResult,
+  type Result,
+  type ResultDetailPayload,
 } from "@/service/result/result.service";
 import type { SubjectForSection } from "@/service/subject/classSubject/classSubject.service";
-import type { EnrollmentOption } from "./resultClient";
-
-// ═══════════════════════════════════════════════════════════════════════
-// Mark Entry Sheet — the core UX improvement.
-// One subject, one section, every student as a row, inline editable cells,
-// single "সব সংরক্ষণ করুন" (Save All) button.
-// ═══════════════════════════════════════════════════════════════════════
+import { EnrollmentOption } from "./resultClient";
 
 interface MarkEntrySheetProps {
-    examId: number;
-    subject: SubjectForSection;
-    students: EnrollmentOption[];
-    results: Result[];
-    onSaved: () => void;
+  examId: number;
+  subject: SubjectForSection;
+  students: EnrollmentOption[];
+  results: Result[]; // all results for the current exam
+  onSaved: () => void;
 }
 
-interface RowState {
-    writtenMarks: string;
-    mcqMarks: string;
-    practicalMarks: string;
-    vivaMarks: string;
-    status: "idle" | "saving" | "saved" | "error";
-}
+type MarkRow = {
+  enrollmentId: number;
+  name: string;
+  roll: string;
+  written: string;
+  mcq: string;
+  practical: string;
+  viva: string;
+  existingResultId: number | null;
+  existingDetails: ResultDetailPayload[];
+  hasThisSubject: boolean;
+};
 
-export function MarkEntrySheet({ examId, subject, students, results, onSaved }: MarkEntrySheetProps) {
-    const buildInitialState = () => {
-        const state: Record<number, RowState> = {};
-        students.forEach((s) => {
-            const existingResult = results.find((r) => r.studentEnrollmentId === s.id);
-            const existingDetail = existingResult?.details.find((d) => d.subjectId === subject.id);
-            state[s.id] = {
-                writtenMarks: existingDetail?.writtenMarks?.toString() ?? "",
-                mcqMarks: existingDetail?.mcqMarks?.toString() ?? "",
-                practicalMarks: existingDetail?.practicalMarks?.toString() ?? "",
-                vivaMarks: existingDetail?.vivaMarks?.toString() ?? "",
-                status: "idle",
-            };
-        });
-        return state;
-    };
+export function MarkEntrySheet({
+  examId,
+  subject,
+  students,
+  results,
+  onSaved,
+}: MarkEntrySheetProps) {
+  const [isPending, startTransition] = useTransition();
+  const [savingId, setSavingId] = useState<number | null>(null);
 
-    const [rows, setRows] = useState<Record<number, RowState>>(buildInitialState);
-    const [isSavingAll, startSaveAllTransition] = useTransition();
+  // Build initial rows from students + existing results
+  const initialRows = useMemo(() => {
+    return students.map((s) => {
+      const existing = results.find((r) => r.studentEnrollmentId === s.id);
+      const thisDetail = existing?.details.find((d) => d.subjectId === subject.id);
 
-    const sheetKey = `${subject.id}-${students.map((s) => s.id).join(",")}`;
-    const [lastKey, setLastKey] = useState(sheetKey);
-    if (sheetKey !== lastKey) {
-        setLastKey(sheetKey);
-        setRows(buildInitialState());
+      return {
+        enrollmentId: s.id,
+        name: s.student.name,
+        roll: s.student.rollNumber ?? "—",
+        written: thisDetail?.writtenMarks?.toString() ?? "",
+        mcq: thisDetail?.mcqMarks?.toString() ?? "",
+        practical: thisDetail?.practicalMarks?.toString() ?? "",
+        viva: thisDetail?.vivaMarks?.toString() ?? "",
+        existingResultId: existing?.id ?? null,
+        existingDetails:
+          existing?.details.map((d) => ({
+            subjectId: d.subjectId,
+            writtenMarks: d.writtenMarks ?? undefined,
+            mcqMarks: d.mcqMarks ?? undefined,
+            practicalMarks: d.practicalMarks ?? undefined,
+            vivaMarks: d.vivaMarks ?? undefined,
+          })) ?? [],
+        hasThisSubject: Boolean(thisDetail),
+      } satisfies MarkRow;
+    });
+  }, [students, results, subject.id]);
+
+  const [rows, setRows] = useState<MarkRow[]>(initialRows);
+
+  // Keep rows in sync when results change (after save + refresh)
+  useMemo(() => {
+    setRows(initialRows);
+  }, [initialRows]);
+
+  const updateCell = (
+    enrollmentId: number,
+    field: "written" | "mcq" | "practical" | "viva",
+    value: string
+  ) => {
+    setRows((prev) =>
+      prev.map((r) =>
+        r.enrollmentId === enrollmentId ? { ...r, [field]: value } : r
+      )
+    );
+  };
+
+  const parseMark = (v: string): number | undefined => {
+    if (v.trim() === "") return undefined;
+    const n = Number(v);
+    return isNaN(n) ? undefined : n;
+  };
+
+  const handleSaveOne = (row: MarkRow) => {
+    const written = parseMark(row.written);
+    const mcq = parseMark(row.mcq);
+    const practical = parseMark(row.practical);
+    const viva = parseMark(row.viva);
+
+    // At least one mark should be present
+    if (
+      written === undefined &&
+      mcq === undefined &&
+      practical === undefined &&
+      viva === undefined
+    ) {
+      toast.error("কমপক্ষে একটি মার্কস দিন");
+      return;
     }
 
-    const updateCell = (enrollmentId: number, field: keyof Omit<RowState, "status">, value: string) => {
-        setRows((current) => ({
-            ...current,
-            [enrollmentId]: { ...current[enrollmentId], [field]: value, status: "idle" },
-        }));
+    const newDetail: ResultDetailPayload = {
+      subjectId: subject.id,
+      writtenMarks: written,
+      mcqMarks: mcq,
+      practicalMarks: practical,
+      vivaMarks: viva,
     };
 
-    const rowTotal = (row: RowState) => {
-        const n = (v: string) => (v === "" ? 0 : Number(v));
-        return n(row.writtenMarks) + n(row.mcqMarks) + n(row.practicalMarks) + n(row.vivaMarks);
-    };
+    setSavingId(row.enrollmentId);
 
-    const saveRow = async (enrollment: EnrollmentOption): Promise<boolean> => {
-        const row = rows[enrollment.id];
-        const hasAnyMark =
-            row.writtenMarks !== "" || row.mcqMarks !== "" || row.practicalMarks !== "" || row.vivaMarks !== "";
-        if (!hasAnyMark) return true;
+    startTransition(async () => {
+      try {
+        if (row.existingResultId) {
+          // Merge: keep other subjects, replace/add current subject
+          const otherDetails = row.existingDetails.filter(
+            (d) => d.subjectId !== subject.id
+          );
+          const fullDetails = [...otherDetails, newDetail];
 
-        setRows((current) => ({ ...current, [enrollment.id]: { ...current[enrollment.id], status: "saving" } }));
+          const res = await updateResult(row.existingResultId, {
+            details: fullDetails,
+          });
 
-        const existingResult = results.find((r) => r.studentEnrollmentId === enrollment.id);
-
-        const newDetail: ResultDetailPayload = {
-            subjectId: subject.id,
-            writtenMarks: row.writtenMarks === "" ? undefined : Number(row.writtenMarks),
-            mcqMarks: row.mcqMarks === "" ? undefined : Number(row.mcqMarks),
-            practicalMarks: row.practicalMarks === "" ? undefined : Number(row.practicalMarks),
-            vivaMarks: row.vivaMarks === "" ? undefined : Number(row.vivaMarks),
-        };
-
-        const mergedDetails: ResultDetailPayload[] = existingResult
-            ? [
-                ...existingResult.details
-                    .filter((d) => d.subjectId !== subject.id)
-                    .map((d) => ({
-                        subjectId: d.subjectId,
-                        writtenMarks: d.writtenMarks ?? undefined,
-                        mcqMarks: d.mcqMarks ?? undefined,
-                        practicalMarks: d.practicalMarks ?? undefined,
-                        vivaMarks: d.vivaMarks ?? undefined,
-                    })),
-                newDetail,
-            ]
-            : [newDetail];
-
-        const response = existingResult
-            ? await updateResult(existingResult.id, { details: mergedDetails })
-            : await createResult({ examId, studentEnrollmentId: enrollment.id, details: mergedDetails });
-
-        setRows((current) => ({
-            ...current,
-            [enrollment.id]: { ...current[enrollment.id], status: response.success ? "saved" : "error" },
-        }));
-
-        return response.success;
-    };
-
-    const handleSaveAll = () => {
-        startSaveAllTransition(async () => {
-            const outcomes = await Promise.all(students.map((s) => saveRow(s)));
-            const failCount = outcomes.filter((ok) => !ok).length;
-
-            if (failCount === 0) {
-                toast.success(`${subject.name} বিষয়ের সকল নম্বর সংরক্ষিত হয়েছে`);
-            } else {
-                toast.error(`${failCount} জন শিক্ষার্থীর নম্বর সংরক্ষণে সমস্যা হয়েছে`);
-            }
+          if (res.success) {
+            toast.success(`${row.name} — আপডেট হয়েছে`);
             onSaved();
-        });
-    };
+          } else {
+            toast.error(res.message);
+          }
+        } else {
+          // First subject for this student → create
+          const res = await createResult({
+            studentEnrollmentId: row.enrollmentId,
+            examId,
+            details: [newDetail],
+          });
 
-    return (
-        <Card className="border-primary/30">
-            <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
-                <div>
-                    <CardTitle className="flex items-center gap-2 text-base">
-                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">5</span>
-                        {subject.name} — নম্বর প্রদান করুন
-                    </CardTitle>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                        {students.length} জন শিক্ষার্থী · পূর্ণমান {subject.fullMarks}
-                    </p>
-                </div>
-                <Button onClick={handleSaveAll} disabled={isSavingAll || students.length === 0}>
-                    {isSavingAll ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                        <Save className="mr-2 h-4 w-4" />
-                    )}
-                    সব সংরক্ষণ করুন
-                </Button>
-            </CardHeader>
-            <CardContent>
-                {students.length === 0 ? (
-                    <p className="py-8 text-center text-sm text-muted-foreground">এই শাখায় কোনো শিক্ষার্থী পাওয়া যায়নি।</p>
-                ) : (
-                    <div className="rounded-md border">
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead className="w-14">রোল</TableHead>
-                                    <TableHead>নাম</TableHead>
-                                    <TableHead className="w-24">লিখিত</TableHead>
-                                    <TableHead className="w-24">MCQ</TableHead>
-                                    <TableHead className="w-24">ব্যবহারিক</TableHead>
-                                    <TableHead className="w-24">মৌখিক</TableHead>
-                                    <TableHead className="w-20">মোট</TableHead>
-                                    <TableHead className="w-10" />
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {students.map((enrollment) => {
-                                    const row = rows[enrollment.id];
-                                    if (!row) return null;
-                                    return (
-                                        <TableRow key={enrollment.id}>
-                                            <TableCell className="text-muted-foreground">
-                                                {enrollment.student.rollNumber ?? "—"}
-                                            </TableCell>
-                                            <TableCell className="font-medium">{enrollment.student.name}</TableCell>
-                                            <TableCell>
-                                                <Input
-                                                    type="number"
-                                                    className="h-8 w-20"
-                                                    value={row.writtenMarks}
-                                                    onChange={(e) => updateCell(enrollment.id, "writtenMarks", e.target.value)}
-                                                />
-                                            </TableCell>
-                                            <TableCell>
-                                                <Input
-                                                    type="number"
-                                                    className="h-8 w-20"
-                                                    value={row.mcqMarks}
-                                                    onChange={(e) => updateCell(enrollment.id, "mcqMarks", e.target.value)}
-                                                />
-                                            </TableCell>
-                                            <TableCell>
-                                                <Input
-                                                    type="number"
-                                                    className="h-8 w-20"
-                                                    value={row.practicalMarks}
-                                                    onChange={(e) => updateCell(enrollment.id, "practicalMarks", e.target.value)}
-                                                />
-                                            </TableCell>
-                                            <TableCell>
-                                                <Input
-                                                    type="number"
-                                                    className="h-8 w-20"
-                                                    value={row.vivaMarks}
-                                                    onChange={(e) => updateCell(enrollment.id, "vivaMarks", e.target.value)}
-                                                />
-                                            </TableCell>
-                                            <TableCell className="font-medium">{rowTotal(row)}</TableCell>
-                                            <TableCell>
-                                                {row.status === "saving" && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
-                                                {row.status === "saved" && <span className="text-xs text-green-600">✓</span>}
-                                                {row.status === "error" && <span className="text-xs text-destructive">!</span>}
-                                            </TableCell>
-                                        </TableRow>
-                                    );
-                                })}
-                            </TableBody>
-                        </Table>
-                    </div>
-                )}
-            </CardContent>
-        </Card>
-    );
+          if (res.success) {
+            toast.success(`${row.name} — তৈরি হয়েছে`);
+            onSaved();
+          } else {
+            toast.error(res.message);
+          }
+        }
+      } finally {
+        setSavingId(null);
+      }
+    });
+  };
+
+  const handleSaveAll = () => {
+    // Optional: sequential save of changed rows
+    // For simplicity we keep per-row save buttons
+    toast.info("প্রতিটি শিক্ষার্থীর পাশে সেভ বাটন ব্যবহার করুন");
+  };
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center justify-between text-base">
+          <div className="flex items-center gap-2">
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
+              5
+            </span>
+            মার্কস এন্ট্রি — {subject.name}
+            <span className="text-sm font-normal text-muted-foreground">
+              (পূর্ণমান {subject.fullMarks})
+            </span>
+          </div>
+        </CardTitle>
+      </CardHeader>
+
+      <CardContent>
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-16">রোল</TableHead>
+                <TableHead>নাম</TableHead>
+                <TableHead className="w-24 text-center">লিখিত</TableHead>
+                <TableHead className="w-24 text-center">MCQ</TableHead>
+                <TableHead className="w-24 text-center">প্র্যাক্টিক্যাল</TableHead>
+                <TableHead className="w-24 text-center">ভাইভা</TableHead>
+                <TableHead className="w-28 text-center">অ্যাকশন</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {rows.map((row) => {
+                const isSaving = savingId === row.enrollmentId;
+                return (
+                  <TableRow key={row.enrollmentId}>
+                    <TableCell className="font-mono text-sm">{row.roll}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        {row.name}
+                        {row.hasThisSubject && (
+                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        type="number"
+                        min={0}
+                        className="h-8 text-center"
+                        value={row.written}
+                        onChange={(e) =>
+                          updateCell(row.enrollmentId, "written", e.target.value)
+                        }
+                        disabled={isPending}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        type="number"
+                        min={0}
+                        className="h-8 text-center"
+                        value={row.mcq}
+                        onChange={(e) =>
+                          updateCell(row.enrollmentId, "mcq", e.target.value)
+                        }
+                        disabled={isPending}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        type="number"
+                        min={0}
+                        className="h-8 text-center"
+                        value={row.practical}
+                        onChange={(e) =>
+                          updateCell(row.enrollmentId, "practical", e.target.value)
+                        }
+                        disabled={isPending}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        type="number"
+                        min={0}
+                        className="h-8 text-center"
+                        value={row.viva}
+                        onChange={(e) =>
+                          updateCell(row.enrollmentId, "viva", e.target.value)
+                        }
+                        disabled={isPending}
+                      />
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Button
+                        size="sm"
+                        variant={row.hasThisSubject ? "outline" : "default"}
+                        disabled={isPending}
+                        onClick={() => handleSaveOne(row)}
+                      >
+                        {isSaving ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <>
+                            <Save className="mr-1.5 h-3.5 w-3.5" />
+                            {row.hasThisSubject ? "আপডেট" : "সেভ"}
+                          </>
+                        )}
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
+
+        {rows.length === 0 && (
+          <p className="py-8 text-center text-sm text-muted-foreground">
+            এই শাখায় কোনো শিক্ষার্থী পাওয়া যায়নি।
+          </p>
+        )}
+      </CardContent>
+    </Card>
+  );
 }

@@ -67,6 +67,7 @@ export const adminNavItems: NavSection[] = [
             { title: "পরীক্ষা", href: "/admin/dashboard/exams", icon: "User", roles: ["ADMIN"] },
             { title: "পরীক্ষার সময়সূচী", href: "/admin/dashboard/exam-schedules", icon: "CalendarClock", roles: ["ADMIN"] },
             { title: "রেজাল্ট", href: "/admin/dashboard/results", icon: "User", roles: ["ADMIN"] },
+            { title: "রেজাল্ট কার্ড", href: "/admin/dashboard/result-cards", icon: "FileBadge", roles: ["ADMIN"] },
             { title: "গ্রেডিং স্কেল", href: "/admin/dashboard/grading-scales", icon: "User", roles: ["ADMIN"] },
             { title: "এসএমএস", href: "/admin/dashboard/sms", icon: "User", roles: ["ADMIN"] },
             { title: "শিক্ষার্থী উত্তীর্ণ", href: "/admin/dashboard/student-promote", icon: "User", roles: ["ADMIN"] },

@@ -300,6 +300,7 @@ export function ResultsClient({
                     {selectedSectionId && selectedSubjectId && (
                         <div ref={markSheetRef}>
                             <MarkEntrySheet
+                                key={selectedSubjectId}
                                 examId={selectedExamId}
                                 subject={sectionSubjects.find((s) => s.id === selectedSubjectId)!}
                                 students={studentsInSection}
