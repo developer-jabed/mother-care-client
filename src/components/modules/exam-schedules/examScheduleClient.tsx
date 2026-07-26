@@ -46,6 +46,7 @@ export interface ExamOption {
 export interface SubjectOption {
     id: number;
     name: string;
+    classIds?: number[];
 }
 export interface ClassOption {
     id: number;
@@ -79,7 +80,6 @@ const emptyForm: FormState = {
     roomNumber: "",
 };
 
-/** datetime-local input থেকে ISO string বানায় */
 const toIso = (dateStr: string, timeStr: string) => {
     if (!dateStr || !timeStr) return "";
     return new Date(`${dateStr}T${timeStr}`).toISOString();
@@ -103,6 +103,7 @@ export function ExamScheduleStudio({ initialSchedules, exams, subjects, classes 
     const subjectMap = useMemo(() => new Map(subjects.map((s) => [s.id, s.name])), [subjects]);
     const classMap = useMemo(() => new Map(classes.map((c) => [c.id, c.name])), [classes]);
 
+    // ── Filter first ─────────────────────────────────────────────────
     const filteredSchedules = useMemo(() => {
         return schedules.filter((s) => {
             if (filterExamId !== "all" && s.examId !== Number(filterExamId)) return false;
@@ -110,6 +111,45 @@ export function ExamScheduleStudio({ initialSchedules, exams, subjects, classes 
             return true;
         });
     }, [schedules, filterExamId, filterClassId]);
+
+    // ── Group by Class ───────────────────────────────────────────────
+    const schedulesByClass = useMemo(() => {
+        const map = new Map<number, ExamSchedule[]>();
+
+        filteredSchedules.forEach((s) => {
+            const list = map.get(s.classId) ?? [];
+            list.push(s);
+            map.set(s.classId, list);
+        });
+
+        // Sort each class schedules by date
+        map.forEach((list) => {
+            list.sort(
+                (a, b) => new Date(a.examDate).getTime() - new Date(b.examDate).getTime()
+            );
+        });
+
+        return map;
+    }, [filteredSchedules]);
+
+    // Sorted class ids for display
+    const sortedClassIds = useMemo(() => {
+        return Array.from(schedulesByClass.keys()).sort((a, b) => {
+            const nameA = classMap.get(a) ?? "";
+            const nameB = classMap.get(b) ?? "";
+            return nameA.localeCompare(nameB);
+        });
+    }, [schedulesByClass, classMap]);
+
+    const availableSubjects = useMemo(() => {
+        if (!form.classId) return [];
+        const selectedClassId = Number(form.classId);
+
+        return subjects.filter((subject) => {
+            if (!subject.classIds || subject.classIds.length === 0) return true;
+            return subject.classIds.includes(selectedClassId);
+        });
+    }, [subjects, form.classId]);
 
     const openCreateForm = () => {
         setEditingId(null);
@@ -201,7 +241,9 @@ export function ExamScheduleStudio({ initialSchedules, exams, subjects, classes 
                 <div className="header-card__left">
                     <div className="header-card__eyebrow">পরিকল্পনা</div>
                     <h2 className="header-card__title">পরীক্ষার সময়সূচী</h2>
-                    <p className="header-card__hint">প্রতিটি পরীক্ষা, শ্রেণি ও বিষয়ের জন্য তারিখ, সময় এবং কক্ষ নির্ধারণ করুন।</p>
+                    <p className="header-card__hint">
+                        প্রতিটি পরীক্ষা, শ্রেণি ও বিষয়ের জন্য তারিখ, সময় এবং কক্ষ নির্ধারণ করুন।
+                    </p>
                 </div>
                 <button className="add-button" onClick={openCreateForm}>
                     <Plus className="h-4 w-4" aria-hidden />
@@ -246,87 +288,115 @@ export function ExamScheduleStudio({ initialSchedules, exams, subjects, classes 
                 </div>
             </section>
 
-            {/* ---------- Table ---------- */}
-            <section className="table-card">
-                {filteredSchedules.length === 0 ? (
-                    <div className="empty-state">
-                        <CalendarClock className="h-8 w-8" aria-hidden />
-                        <p>কোনো সময়সূচী পাওয়া যায়নি</p>
-                    </div>
+            {/* ---------- Class-wise Schedule List ---------- */}
+            <div className="class-groups">
+                {sortedClassIds.length === 0 ? (
+                    <section className="table-card">
+                        <div className="empty-state">
+                            <CalendarClock className="h-8 w-8" aria-hidden />
+                            <p>কোনো সময়সূচী পাওয়া যায়নি</p>
+                        </div>
+                    </section>
                 ) : (
-                    <table className="schedule-table">
-                        <thead>
-                            <tr>
-                                <th>পরীক্ষা</th>
-                                <th>শ্রেণি</th>
-                                <th>বিষয়</th>
-                                <th>তারিখ</th>
-                                <th>সময়</th>
-                                <th>কক্ষ</th>
-                                <th className="actions-col"></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {filteredSchedules.map((s) => (
-                                <tr key={s.id}>
-                                    <td>{examMap.get(s.examId) ?? s.exam?.name ?? "—"}</td>
-                                    <td>{classMap.get(s.classId) ?? s.class?.name ?? "—"}</td>
-                                    <td>{subjectMap.get(s.subjectId) ?? s.subject?.name ?? "—"}</td>
-                                    <td className="mono">
-                                        {new Date(s.examDate).toLocaleDateString("bn-BD")}
-                                    </td>
-                                    <td className="mono">
-                                        {new Date(s.startTime).toLocaleTimeString("bn-BD", {
-                                            hour: "2-digit",
-                                            minute: "2-digit",
-                                        })}{" "}
-                                        -{" "}
-                                        {new Date(s.endTime).toLocaleTimeString("bn-BD", {
-                                            hour: "2-digit",
-                                            minute: "2-digit",
-                                        })}
-                                    </td>
-                                    <td>
-                                        {s.roomNumber ? (
-                                            <span className="room-badge">
-                                                <MapPin className="h-3 w-3" aria-hidden />
-                                                {s.roomNumber}
-                                            </span>
-                                        ) : (
-                                            "—"
-                                        )}
-                                    </td>
-                                    <td className="actions-col">
-                                        <div className="row-actions">
-                                            <button className="icon-btn" onClick={() => openEditForm(s)} aria-label="সম্পাদনা">
-                                                <Pencil className="h-3.5 w-3.5" aria-hidden />
-                                            </button>
-                                            <button
-                                                className="icon-btn icon-btn--danger"
-                                                onClick={() => setDeleteTarget(s)}
-                                                aria-label="মুছুন"
-                                            >
-                                                <Trash2 className="h-3.5 w-3.5" aria-hidden />
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                    sortedClassIds.map((classId) => {
+                        const classSchedules = schedulesByClass.get(classId) ?? [];
+                        const className = classMap.get(classId) ?? `Class ${classId}`;
+
+                        return (
+                            <section key={classId} className="table-card class-group">
+                                {/* Class Header */}
+                                <div className="class-header">
+                                    <h3 className="class-title">{className}</h3>
+                                    <span className="class-count">
+                                        {classSchedules.length} টি সময়সূচী
+                                    </span>
+                                </div>
+
+                                <table className="schedule-table">
+                                    <thead>
+                                        <tr>
+                                            <th>পরীক্ষা</th>
+                                            <th>বিষয়</th>
+                                            <th>তারিখ</th>
+                                            <th>সময়</th>
+                                            <th>কক্ষ</th>
+                                            <th className="actions-col"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {classSchedules.map((s) => (
+                                            <tr key={s.id}>
+                                                <td>{examMap.get(s.examId) ?? s.exam?.name ?? "—"}</td>
+                                                <td>
+                                                    {subjectMap.get(s.subjectId) ?? s.subject?.name ?? "—"}
+                                                </td>
+                                                <td className="mono">
+                                                    {new Date(s.examDate).toLocaleDateString("bn-BD")}
+                                                </td>
+                                                <td className="mono">
+                                                    {new Date(s.startTime).toLocaleTimeString("bn-BD", {
+                                                        hour: "2-digit",
+                                                        minute: "2-digit",
+                                                    })}{" "}
+                                                    -{" "}
+                                                    {new Date(s.endTime).toLocaleTimeString("bn-BD", {
+                                                        hour: "2-digit",
+                                                        minute: "2-digit",
+                                                    })}
+                                                </td>
+                                                <td>
+                                                    {s.roomNumber ? (
+                                                        <span className="room-badge">
+                                                            <MapPin className="h-3 w-3" aria-hidden />
+                                                            {s.roomNumber}
+                                                        </span>
+                                                    ) : (
+                                                        "—"
+                                                    )}
+                                                </td>
+                                                <td className="actions-col">
+                                                    <div className="row-actions">
+                                                        <button
+                                                            className="icon-btn"
+                                                            onClick={() => openEditForm(s)}
+                                                            aria-label="সম্পাদনা"
+                                                        >
+                                                            <Pencil className="h-3.5 w-3.5" aria-hidden />
+                                                        </button>
+                                                        <button
+                                                            className="icon-btn icon-btn--danger"
+                                                            onClick={() => setDeleteTarget(s)}
+                                                            aria-label="মুছুন"
+                                                        >
+                                                            <Trash2 className="h-3.5 w-3.5" aria-hidden />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </section>
+                        );
+                    })
                 )}
-            </section>
+            </div>
 
             {/* ---------- Create / Edit Dialog ---------- */}
             <Dialog open={isFormOpen} onOpenChange={(open) => !open && closeForm()}>
                 <DialogContent className="schedule-dialog">
                     <DialogHeader>
-                        <DialogTitle>{editingId ? "সময়সূচী সম্পাদনা করুন" : "নতুন সময়সূচী যোগ করুন"}</DialogTitle>
+                        <DialogTitle>
+                            {editingId ? "সময়সূচী সম্পাদনা করুন" : "নতুন সময়সূচী যোগ করুন"}
+                        </DialogTitle>
                     </DialogHeader>
 
                     <div className="form-grid">
                         <FormField label="পরীক্ষা">
-                            <Select value={form.examId} onValueChange={(v) => setForm((f) => ({ ...f, examId: v }))}>
+                            <Select
+                                value={form.examId}
+                                onValueChange={(v) => setForm((f) => ({ ...f, examId: v }))}
+                            >
                                 <SelectTrigger>
                                     <SelectValue placeholder="নির্বাচন করুন" />
                                 </SelectTrigger>
@@ -341,7 +411,16 @@ export function ExamScheduleStudio({ initialSchedules, exams, subjects, classes 
                         </FormField>
 
                         <FormField label="শ্রেণি">
-                            <Select value={form.classId} onValueChange={(v) => setForm((f) => ({ ...f, classId: v }))}>
+                            <Select
+                                value={form.classId}
+                                onValueChange={(v) =>
+                                    setForm((f) => ({
+                                        ...f,
+                                        classId: v,
+                                        subjectId: "",
+                                    }))
+                                }
+                            >
                                 <SelectTrigger>
                                     <SelectValue placeholder="নির্বাচন করুন" />
                                 </SelectTrigger>
@@ -356,16 +435,30 @@ export function ExamScheduleStudio({ initialSchedules, exams, subjects, classes 
                         </FormField>
 
                         <FormField label="বিষয়">
-                            <Select value={form.subjectId} onValueChange={(v) => setForm((f) => ({ ...f, subjectId: v }))}>
+                            <Select
+                                value={form.subjectId}
+                                onValueChange={(v) => setForm((f) => ({ ...f, subjectId: v }))}
+                                disabled={!form.classId}
+                            >
                                 <SelectTrigger>
-                                    <SelectValue placeholder="নির্বাচন করুন" />
+                                    <SelectValue
+                                        placeholder={
+                                            form.classId ? "নির্বাচন করুন" : "আগে শ্রেণি নির্বাচন করুন"
+                                        }
+                                    />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {subjects.map((subject) => (
-                                        <SelectItem key={subject.id} value={String(subject.id)}>
-                                            {subject.name}
+                                    {availableSubjects.length === 0 ? (
+                                        <SelectItem value="__none" disabled>
+                                            এই শ্রেণির কোনো বিষয় নেই
                                         </SelectItem>
-                                    ))}
+                                    ) : (
+                                        availableSubjects.map((subject) => (
+                                            <SelectItem key={subject.id} value={String(subject.id)}>
+                                                {subject.name}
+                                            </SelectItem>
+                                        ))
+                                    )}
                                 </SelectContent>
                             </Select>
                         </FormField>
@@ -430,15 +523,21 @@ export function ExamScheduleStudio({ initialSchedules, exams, subjects, classes 
                         <AlertDialogDescription>
                             {deleteTarget && (
                                 <>
-                                    {examMap.get(deleteTarget.examId)} · {classMap.get(deleteTarget.classId)} ·{" "}
-                                    {subjectMap.get(deleteTarget.subjectId)} — এই সময়সূচীটি স্থায়ীভাবে মুছে যাবে।
+                                    {examMap.get(deleteTarget.examId)} ·{" "}
+                                    {classMap.get(deleteTarget.classId)} ·{" "}
+                                    {subjectMap.get(deleteTarget.subjectId)} — এই সময়সূচীটি স্থায়ীভাবে
+                                    মুছে যাবে।
                                 </>
                             )}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel disabled={isPending}>বাতিল</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDelete} disabled={isPending} className="delete-confirm-btn">
+                        <AlertDialogAction
+                            onClick={handleDelete}
+                            disabled={isPending}
+                            className="delete-confirm-btn"
+                        >
                             {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                             মুছে ফেলুন
                         </AlertDialogAction>
@@ -461,7 +560,8 @@ export function ExamScheduleStudio({ initialSchedules, exams, subjects, classes 
                     display: flex;
                     flex-direction: column;
                     gap: 20px;
-                    font-family: "Hind Siliguri", "Noto Sans Bengali", ui-sans-serif, system-ui, sans-serif;
+                    font-family: "Hind Siliguri", "Noto Sans Bengali", ui-sans-serif, system-ui,
+                        sans-serif;
                     color: var(--ink);
                 }
 
@@ -470,7 +570,7 @@ export function ExamScheduleStudio({ initialSchedules, exams, subjects, classes 
                     font-variant-numeric: tabular-nums;
                 }
 
-                /* ---------- Header ---------- */
+                /* Header */
                 .header-card {
                     position: relative;
                     display: flex;
@@ -530,7 +630,7 @@ export function ExamScheduleStudio({ initialSchedules, exams, subjects, classes 
                     background: #14213a;
                 }
 
-                /* ---------- Filters ---------- */
+                /* Filters */
                 .filter-bar {
                     display: flex;
                     flex-wrap: wrap;
@@ -553,7 +653,41 @@ export function ExamScheduleStudio({ initialSchedules, exams, subjects, classes 
                     letter-spacing: 0.02em;
                 }
 
-                /* ---------- Table ---------- */
+                /* Class Groups */
+                .class-groups {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 20px;
+                }
+
+                .class-group {
+                    overflow: hidden;
+                }
+
+                .class-header {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    padding: 14px 18px;
+                    background: var(--navy);
+                    color: white;
+                }
+
+                .class-title {
+                    font-size: 15px;
+                    font-weight: 700;
+                    margin: 0;
+                }
+
+                .class-count {
+                    font-size: 12px;
+                    opacity: 0.85;
+                    background: rgba(255, 255, 255, 0.15);
+                    padding: 3px 10px;
+                    border-radius: 999px;
+                }
+
+                /* Table */
                 .table-card {
                     background: var(--paper-raised);
                     border: 1px solid var(--hairline);
@@ -638,7 +772,7 @@ export function ExamScheduleStudio({ initialSchedules, exams, subjects, classes 
                     font-size: 13.5px;
                 }
 
-                /* ---------- Dialog form ---------- */
+                /* Dialog */
                 .form-grid {
                     display: grid;
                     grid-template-columns: 1fr 1fr;

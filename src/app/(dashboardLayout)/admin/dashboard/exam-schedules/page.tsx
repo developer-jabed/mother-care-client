@@ -16,12 +16,11 @@ export default async function ExamSchedulesPage() {
     const [schedulesResult, examsResult, subjectsResult, enrollments] = await Promise.all([
         getExamSchedules({}),
         getExams({ limit: 100 }),
-        getSubjects({ limit: 200 }), // adjust to your actual signature
+        getSubjects({ limit: 200 }),
         getEnrollmentOptions({}),
     ]);
 
-
-    console.log(schedulesResult);
+    // ── Build class list ──────────────────────────────────────────────
     const classMap = new Map<number, ClassOption>();
     enrollments.forEach((e: any) => {
         if (!classMap.has(e.classId)) {
@@ -29,8 +28,28 @@ export default async function ExamSchedulesPage() {
         }
     });
 
-    const exams: ExamOption[] = examsResult.data.map((e: any) => ({ id: e.id, name: e.name }));
-    const subjects: SubjectOption[] = subjectsResult.data.map((s: any) => ({ id: s.id, name: s.name }));
+    const exams: ExamOption[] = examsResult.data.map((e: any) => ({
+        id: e.id,
+        name: e.name,
+    }));
+
+    // ── Subjects with class relation ─────────────────────────────────
+    // Adjust this according to your actual subject response structure.
+    // Common patterns:
+    // 1. subject.classId
+    // 2. subject.classes = [{ id, name }]
+    // 3. subject.classSubjects = [{ classId }]
+    const subjects: SubjectOption[] = subjectsResult.data.map((s: any) => ({
+        id: s.id,
+        name: s.name,
+        // support different possible shapes
+        classIds: s.classId
+            ? [s.classId]
+            : s.classes?.map((c: any) => c.id) ??
+              s.classSubjects?.map((cs: any) => cs.classId) ??
+              [],
+    }));
+
     const classes: ClassOption[] = Array.from(classMap.values());
 
     return (
