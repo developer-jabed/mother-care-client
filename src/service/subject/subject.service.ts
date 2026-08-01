@@ -211,6 +211,62 @@ export async function getSubjects(params: GetSubjectsParams = {}): Promise<{
     }
 }
 
+
+/**
+ * Get subjects that belong to a specific class
+ * Uses the new backend endpoint: GET /subjects/class/:classId
+ */
+export async function getSubjectsByClassId(classId: number): Promise<{
+    data: Subject[];
+    success: boolean;
+    message?: string;
+}> {
+    try {
+        const response = await serverFetch.get(`/subjects/class/${classId}`, {
+            next: { tags: [`class-subjects-${classId}`, "class-subjects-list"] },
+        });
+
+        const result = await response.json();
+
+        if (!result.success) {
+            console.error("getSubjectsByClassId failed:", result.message);
+            return {
+                data: [],
+                success: false,
+                message: result.message || "বিষয় পাওয়া যায়নি",
+            };
+        }
+
+        // Re-use the same zod schema you already have
+        const parsed = getSubjectsResponseZodSchema.safeParse(result.data);
+
+        if (!parsed.success) {
+            console.error("getSubjectsByClassId shape mismatch:", parsed.error);
+            return {
+                data: [],
+                success: false,
+                message: "ডেটা ফরম্যাট সঠিক নয়",
+            };
+        }
+
+        return {
+            data: parsed.data,
+            success: true,
+        };
+    } catch (error: any) {
+        console.error("Get subjects by classId error:", error);
+        return {
+            data: [],
+            success: false,
+            message:
+                process.env.NODE_ENV === "development"
+                    ? error.message
+                    : "কিছু একটা ভুল হয়েছে। আবার চেষ্টা করুন।",
+        };
+    }
+}
+
+
 export async function getSubject(id: number) {
     try {
         const response = await serverFetch.get(`/subjects/${id}`, {
