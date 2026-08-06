@@ -2,13 +2,36 @@
 
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Pencil, Loader2, Camera, User, Calendar, Phone, MapPin, X, Check, Users as GenderIcon } from "lucide-react";
+import {
+    Pencil,
+    Loader2,
+    Camera,
+    User,
+    Calendar,
+    Phone,
+    MapPin,
+    X,
+    Check,
+    Users as GenderIcon,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { updateStudent } from "@/service/student/student.service";
@@ -81,14 +104,22 @@ export default function EditStudentModal({ student }: Props) {
                     </DialogHeader>
                 </div>
 
-                <form ref={formRef} action={handleSubmit} className="px-6 pb-6 -mt-10 relative z-10 space-y-5">
+                <form
+                    ref={formRef}
+                    action={handleSubmit}
+                    className="px-6 pb-6 -mt-10 relative z-10 space-y-5"
+                >
                     {/* Avatar upload */}
                     <div className="flex justify-center">
                         <div className="relative group">
                             <div className="h-24 w-24 rounded-full border-4 border-white shadow-lg overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center ring-1 ring-gray-200">
                                 {photoPreview ? (
                                     // eslint-disable-next-line @next/next/no-img-element
-                                    <img src={photoPreview} alt="Preview" className="h-full w-full object-cover" />
+                                    <img
+                                        src={photoPreview}
+                                        alt="Preview"
+                                        className="h-full w-full object-cover"
+                                    />
                                 ) : (
                                     <User className="h-10 w-10 text-gray-400" />
                                 )}
@@ -120,6 +151,7 @@ export default function EditStudentModal({ student }: Props) {
                         </div>
                     </div>
 
+                    {/* Personal info */}
                     <div className="rounded-2xl border border-gray-100 bg-white shadow-sm p-5 space-y-4">
                         <div className="flex items-center gap-2 pb-1">
                             <div className="h-7 w-7 rounded-lg bg-rose-50 flex items-center justify-center">
@@ -129,7 +161,9 @@ export default function EditStudentModal({ student }: Props) {
                         </div>
 
                         <div className="space-y-1.5">
-                            <Label htmlFor="fullName" className="text-xs font-medium text-gray-600">পূর্ণ নাম</Label>
+                            <Label htmlFor="fullName" className="text-xs font-medium text-gray-600">
+                                পূর্ণ নাম
+                            </Label>
                             <Input
                                 id="fullName"
                                 name="fullName"
@@ -139,16 +173,71 @@ export default function EditStudentModal({ student }: Props) {
                                     errors?.fullName && "border-red-300 focus-visible:ring-red-500"
                                 )}
                             />
-                            {errors?.fullName && <p className="text-xs text-red-500">{errors.fullName[0]}</p>}
+                            {errors?.fullName && (
+                                <p className="text-xs text-red-500">{errors.fullName[0]}</p>
+                            )}
+                        </div>
+
+                        {/* Father & Mother name */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="space-y-1.5">
+                                <Label
+                                    htmlFor="fatherName"
+                                    className="text-xs font-medium text-gray-600"
+                                >
+                                    পিতার নাম
+                                </Label>
+                                <Input
+                                    id="fatherName"
+                                    name="fatherName"
+                                    defaultValue={student.fatherName ?? ""}
+                                    className={cn(
+                                        "h-11 rounded-xl border-gray-200 focus-visible:ring-rose-500 focus-visible:border-rose-500",
+                                        errors?.fatherName &&
+                                            "border-red-300 focus-visible:ring-red-500"
+                                    )}
+                                />
+                                {errors?.fatherName && (
+                                    <p className="text-xs text-red-500">{errors.fatherName[0]}</p>
+                                )}
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <Label
+                                    htmlFor="motherName"
+                                    className="text-xs font-medium text-gray-600"
+                                >
+                                    মাতার নাম
+                                </Label>
+                                <Input
+                                    id="motherName"
+                                    name="motherName"
+                                    defaultValue={student.motherName ?? ""}
+                                    className={cn(
+                                        "h-11 rounded-xl border-gray-200 focus-visible:ring-rose-500 focus-visible:border-rose-500",
+                                        errors?.motherName &&
+                                            "border-red-300 focus-visible:ring-red-500"
+                                    )}
+                                />
+                                {errors?.motherName && (
+                                    <p className="text-xs text-red-500">{errors.motherName[0]}</p>
+                                )}
+                            </div>
                         </div>
 
                         <div className="grid grid-cols-2 gap-3">
                             <div className="space-y-1.5">
-                                <Label htmlFor="gender" className="text-xs font-medium text-gray-600 flex items-center gap-1">
+                                <Label
+                                    htmlFor="gender"
+                                    className="text-xs font-medium text-gray-600 flex items-center gap-1"
+                                >
                                     <GenderIcon className="h-3 w-3" /> লিঙ্গ
                                 </Label>
                                 <Select name="gender" defaultValue={student.gender}>
-                                    <SelectTrigger id="gender" className="h-11 rounded-xl border-gray-200 focus:ring-rose-500">
+                                    <SelectTrigger
+                                        id="gender"
+                                        className="h-11 rounded-xl border-gray-200 focus:ring-rose-500"
+                                    >
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -157,11 +246,16 @@ export default function EditStudentModal({ student }: Props) {
                                         <SelectItem value="OTHER">অন্যান্য</SelectItem>
                                     </SelectContent>
                                 </Select>
-                                {errors?.gender && <p className="text-xs text-red-500">{errors.gender[0]}</p>}
+                                {errors?.gender && (
+                                    <p className="text-xs text-red-500">{errors.gender[0]}</p>
+                                )}
                             </div>
 
                             <div className="space-y-1.5">
-                                <Label htmlFor="dateOfBirth" className="text-xs font-medium text-gray-600 flex items-center gap-1">
+                                <Label
+                                    htmlFor="dateOfBirth"
+                                    className="text-xs font-medium text-gray-600 flex items-center gap-1"
+                                >
                                     <Calendar className="h-3 w-3" /> জন্ম তারিখ
                                 </Label>
                                 <Input
@@ -171,11 +265,14 @@ export default function EditStudentModal({ student }: Props) {
                                     defaultValue={student.dateOfBirth?.slice(0, 10)}
                                     className="h-11 rounded-xl border-gray-200 focus-visible:ring-rose-500 focus-visible:border-rose-500"
                                 />
-                                {errors?.dateOfBirth && <p className="text-xs text-red-500">{errors.dateOfBirth[0]}</p>}
+                                {errors?.dateOfBirth && (
+                                    <p className="text-xs text-red-500">{errors.dateOfBirth[0]}</p>
+                                )}
                             </div>
                         </div>
                     </div>
 
+                    {/* Contact info */}
                     <div className="rounded-2xl border border-gray-100 bg-white shadow-sm p-5 space-y-4">
                         <div className="flex items-center gap-2 pb-1">
                             <div className="h-7 w-7 rounded-lg bg-amber-50 flex items-center justify-center">
@@ -185,7 +282,10 @@ export default function EditStudentModal({ student }: Props) {
                         </div>
 
                         <div className="space-y-1.5">
-                            <Label htmlFor="phone" className="text-xs font-medium text-gray-600 flex items-center gap-1">
+                            <Label
+                                htmlFor="phone"
+                                className="text-xs font-medium text-gray-600 flex items-center gap-1"
+                            >
                                 <Phone className="h-3 w-3" /> মোবাইল নম্বর
                             </Label>
                             <Input
@@ -195,11 +295,16 @@ export default function EditStudentModal({ student }: Props) {
                                 placeholder="01XXXXXXXXX"
                                 className="h-11 rounded-xl border-gray-200 focus-visible:ring-amber-500 focus-visible:border-amber-500"
                             />
-                            {errors?.phone && <p className="text-xs text-red-500">{errors.phone[0]}</p>}
+                            {errors?.phone && (
+                                <p className="text-xs text-red-500">{errors.phone[0]}</p>
+                            )}
                         </div>
 
                         <div className="space-y-1.5">
-                            <Label htmlFor="address" className="text-xs font-medium text-gray-600 flex items-center gap-1">
+                            <Label
+                                htmlFor="address"
+                                className="text-xs font-medium text-gray-600 flex items-center gap-1"
+                            >
                                 <MapPin className="h-3 w-3" /> ঠিকানা
                             </Label>
                             <Textarea
@@ -209,7 +314,9 @@ export default function EditStudentModal({ student }: Props) {
                                 rows={2}
                                 className="rounded-xl border-gray-200 focus-visible:ring-amber-500 resize-none"
                             />
-                            {errors?.address && <p className="text-xs text-red-500">{errors.address[0]}</p>}
+                            {errors?.address && (
+                                <p className="text-xs text-red-500">{errors.address[0]}</p>
+                            )}
                         </div>
                     </div>
 
@@ -229,9 +336,14 @@ export default function EditStudentModal({ student }: Props) {
                             className="flex-1 h-11 rounded-xl gap-2 bg-gradient-to-r from-rose-600 to-amber-500 hover:from-rose-700 hover:to-amber-600 text-white shadow-md shadow-rose-200 border-0"
                         >
                             {isPending ? (
-                                <><Loader2 className="h-4 w-4 animate-spin" /> সংরক্ষণ হচ্ছে...</>
+                                <>
+                                    <Loader2 className="h-4 w-4 animate-spin" /> সংরক্ষণ
+                                    হচ্ছে...
+                                </>
                             ) : (
-                                <><Check className="h-4 w-4" /> আপডেট করুন</>
+                                <>
+                                    <Check className="h-4 w-4" /> আপডেট করুন
+                                </>
                             )}
                         </Button>
                     </div>

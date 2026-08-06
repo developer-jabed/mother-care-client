@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { getExams } from "@/service/exam/exam.service";
-import { getEnrollmentOptions } from "@/service/studentEnrolled/StudentEnrolled.service";
+import { getClasses } from "@/service/academic/createAcademicYear.service"; // ← adjust path if needed
 import {
     ResultCardStudio,
     type ClassOption,
@@ -15,33 +15,24 @@ export const metadata = {
 };
 
 export default async function ResultCardsPage() {
-    const [examsResult, enrollments] = await Promise.all([
+    const [examsResult, classesData] = await Promise.all([
         getExams({ limit: 100 }),
-        getEnrollmentOptions({}), // adjust params if needed
+        getClasses(),
     ]);
 
-    const classMap = new Map<number, ClassOption>();
-
-    enrollments.forEach((e: any) => {
-        if (!classMap.has(e.classId)) {
-            classMap.set(e.classId, {
-                id: e.classId,
-                name: e.className,
-                sections: [],
-            });
-        }
-        const cls = classMap.get(e.classId)!;
-        if (!cls.sections.some((s) => s.id === e.sectionId)) {
-            cls.sections.push({ id: e.sectionId, name: e.sectionName });
-        }
-    });
-
-    const exams: ExamOption[] = examsResult.data.map((e: any) => ({
+    const exams: ExamOption[] = (examsResult.data ?? []).map((e: any) => ({
         id: e.id,
         name: e.name,
     }));
 
-    const classes: ClassOption[] = Array.from(classMap.values());
+    const classes: ClassOption[] = classesData.map((cls) => ({
+        id: cls.id,
+        name: cls.name,
+        sections: (cls.sections ?? []).map((s) => ({
+            id: s.id,
+            name: s.name,
+        })),
+    }));
 
     return (
         <div className="p-6">

@@ -43,7 +43,6 @@ export function AdmitCardStudio({ exams, classes }: AdmitCardStudioProps) {
     const [examId, setExamId] = useState<number | null>(null);
     const [classId, setClassId] = useState<number | null>(null);
     const [sectionId, setSectionId] = useState<number | null>(null);
-
     const [state, setState] = useState<GenerationState>("idle");
     const [isRetrying, setIsRetrying] = useState(false);
     const [fileUrl, setFileUrl] = useState<string | null>(null);
@@ -180,7 +179,7 @@ export function AdmitCardStudio({ exams, classes }: AdmitCardStudioProps) {
 
     return (
         <div className="admit-studio">
-            {/* ---------- Request card ---------- */}
+
             <section className="request-card">
                 <div className="request-card__eyebrow">নথি অনুরোধ</div>
                 <h2 className="request-card__title">প্রবেশপত্র ইস্যু করুন</h2>

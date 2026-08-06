@@ -1,14 +1,18 @@
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, UserPlus } from "lucide-react";
 import { getStudentById } from "@/service/student/student.service";
-import { getAllAcademicYears, getClasses, getCurrentAcademicYear } from "@/service/academic/createAcademicYear.service";
-import { UserPlus } from "lucide-react";
+import {
+    getAllAcademicYears,
+    getClasses,
+    getCurrentAcademicYear,
+} from "@/service/academic/createAcademicYear.service";
 import StudentSummaryCard from "@/components/modules/student/StudentSummaryCard";
 import EnrollmentForm from "@/components/modules/student/EnrollmentForm";
 import EditStudentModal from "@/components/modules/student/EditStudentModal";
+import EditEnrollmentModal from "@/components/modules/student/EditEnrollmentModal";
 
-export const dynamic = "force-dynamic"; // Important: Do NOT use force-static
-export const revalidate = 1000; // Revalidate every 1000 seconds (about 16.67 minutes)
+export const dynamic = "force-dynamic";
+export const revalidate = 1000;
 
 interface Props {
     params: Promise<{ id: string }>;
@@ -54,7 +58,7 @@ export default async function StudentDetailsPage({ params, searchParams }: Props
 
     return (
         <div className="p-6 max-w-5xl mx-auto space-y-6">
-            {/* Back button + Edit button */}
+            {/* Back button + Edit Student button */}
             <div className="flex items-center justify-between">
                 <Link
                     href="/admin/dashboard/students"
@@ -69,6 +73,7 @@ export default async function StudentDetailsPage({ params, searchParams }: Props
 
             <StudentSummaryCard student={student} />
 
+            {/* New enrollment form (only if not enrolled in current year) */}
             {!isEnrolledInCurrentYear && (
                 <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
                     <div className="flex items-center gap-3 mb-6">
@@ -89,6 +94,7 @@ export default async function StudentDetailsPage({ params, searchParams }: Props
                 </div>
             )}
 
+            {/* Enrollment history + Edit button */}
             {student.enrollments && student.enrollments.length > 0 && (
                 <div className="bg-white rounded-2xl border p-6">
                     <h3 className="text-lg font-semibold mb-4">পূর্ববর্তী ভর্তি তথ্য</h3>
@@ -100,6 +106,7 @@ export default async function StudentDetailsPage({ params, searchParams }: Props
                                     <th className="text-left py-3">ক্লাস</th>
                                     <th className="text-left py-3">শাখা</th>
                                     <th className="text-left py-3">রোল নম্বর</th>
+                                    <th className="text-right py-3">অ্যাকশন</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -109,6 +116,13 @@ export default async function StudentDetailsPage({ params, searchParams }: Props
                                         <td className="py-3">{enroll.class?.name}</td>
                                         <td className="py-3">{enroll.section?.name}</td>
                                         <td className="py-3 font-medium">{enroll.rollNumber}</td>
+                                        <td className="py-3 text-right">
+                                            <EditEnrollmentModal
+                                                enrollment={enroll}
+                                                classes={classes}
+                                                academicYears={academicYears}
+                                            />
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>
