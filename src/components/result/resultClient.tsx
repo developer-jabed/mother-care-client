@@ -40,7 +40,7 @@ export interface EnrollmentOption {
     student: {
         id: number;
         name: string;
-        rollNumber?: string;
+        rollNumber?: number;
     };
 }
 
