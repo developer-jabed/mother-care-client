@@ -19,12 +19,13 @@ export interface StudentEnrollment {
     academicYearId: number;
     classId: number;
     sectionId: number;
+  
     rollNumber: number;
     isCurrent: boolean;
     status: "ACTIVE" | "PROMOTED" | "COMPLETED" | "TRANSFERRED";
     createdAt: string;
     updatedAt: string;
-    academicYear: { id: number; name: string };
+    academicYear: { id: number; name: string , title: string};
     class: { id: number; name: string };
     section: { id: number; name: string };
     student: { id: number; fullName: string; admissionNumber: string };
