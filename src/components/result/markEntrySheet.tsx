@@ -37,7 +37,7 @@ interface MarkEntrySheetProps {
 type MarkRow = {
   enrollmentId: number;
   name: string;
-  roll: string;
+  roll: number | string;
   written: string;
   mcq: string;
   practical: string;
