@@ -8,7 +8,7 @@ import { DashboardClassFilter } from "@/components/modules/fee/DashboardClassFil
 import { Wallet } from "lucide-react";
 import { getClasses } from "@/service/academic/createAcademicYear.service";
 
-export const revalidate = 300;
+export const dynamic = "force-dynamic";
 
 interface Props {
   searchParams: Promise<Record<string, string | undefined>>;
