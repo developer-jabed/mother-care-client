@@ -10,6 +10,7 @@ import {
     bulkPromoteZodSchema,
 } from "@/zod/createStudentEnrolled.validation";
 import { revalidateTag } from "next/cache";
+import { StudentFee } from "../fees/fee.service";
 
 // ---------- Types ----------
 export interface StudentEnrollment {
@@ -18,18 +19,19 @@ export interface StudentEnrollment {
     academicYearId: number;
     classId: number;
     sectionId: number;
-    rollNumber: string;
+    rollNumber: number;
     isCurrent: boolean;
     status: "ACTIVE" | "PROMOTED" | "COMPLETED" | "TRANSFERRED";
     createdAt: string;
     updatedAt: string;
-    academicYear?: { id: number; title: string };
-    class?: { id: number; name: string };
-    section?: { id: number; name: string };
-    student?: { id: number; fullName: string };
+    academicYear: { id: number; name: string };
+    class: { id: number; name: string };
+    section: { id: number; name: string };
+    student: { id: number; fullName: string; admissionNumber: string };
     promotedFrom?: { academicYearId: number } | null;
     results?: StudentResult[];
     smsLogs?: StudentSmsLog[];
+    studentFees?: StudentFee[];
 }
 
 export interface StudentResult {
@@ -70,7 +72,7 @@ export interface EnrollmentOption {
     student: {
         id: number;
         name: string;
-        rollNumber?: string;
+        rollNumber?: number;
     };
 }
 

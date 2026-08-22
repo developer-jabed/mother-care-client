@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { MapPin, Phone, Mail, Facebook, Youtube, Instagram } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -8,92 +9,92 @@ const PublicFooter = () => {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="bg-slate-900 text-slate-400">
-      <div className="max-w-screen-2xl mx-auto px-6 md:px-10 lg:px-16 pt-20 pb-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12">
+    <footer className="relative overflow-hidden bg-[#0c1f1a] text-emerald-100/70">
+      {/* Subtle top gradient line */}
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/40 to-transparent" />
+
+      {/* Soft background glow */}
+      <div className="pointer-events-none absolute -left-32 -top-32 h-96 w-96 rounded-full bg-emerald-600/10 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-teal-600/10 blur-3xl" />
+
+      <div className="relative mx-auto max-w-screen-2xl px-6 pb-12 pt-16 md:px-10 lg:px-16">
+        <div className="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-12">
           {/* Brand Column */}
           <div className="lg:col-span-5">
-            <div className="flex items-center gap-4 mb-6">
-              <div className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-blue-600 rounded-3xl flex items-center justify-center shadow-lg">
-                <span className="text-white text-3xl font-bold">MC</span>
+            <div className="mb-6 flex items-center gap-4">
+              <div className="relative h-14 w-14 overflow-hidden rounded-2xl shadow-lg shadow-emerald-900/40 ring-2 ring-emerald-500/30">
+                <Image
+                  src="/asset/mothercare.png"
+                  alt="মাদার কেয়ার স্কুল অ্যান্ড কলেজ"
+                  fill
+                  className="object-cover"
+                  sizes="56px"
+                />
               </div>
+
               <div>
-                <div className="text-3xl font-bold text-white tracking-tight">
+                <div className="text-2xl font-bold tracking-tight text-white">
                   মাদার কেয়ার
                 </div>
-                <p className="text-emerald-400 text-lg -mt-1">School & College</p>
+                <p className="-mt-0.5 text-base text-emerald-400">
+                  School & College
+                </p>
               </div>
             </div>
 
-            <p className="text-slate-400 leading-relaxed max-w-md text-[15px]">
-              শিক্ষাই ভবিষ্যতের আলোর পথ। আধুনিক, নৈতিক ও মানসম্মত শিক্ষার নির্ভরযোগ্য প্রতিষ্ঠান।
+            <p className="max-w-md text-[15px] leading-relaxed text-emerald-100/60">
+              শিক্ষাই ভবিষ্যতের আলোর পথ। আধুনিক, নৈতিক ও মানসম্মত শিক্ষার
+              নির্ভরযোগ্য প্রতিষ্ঠান।
             </p>
 
-            <div className="mt-10 space-y-4 text-sm">
+            <div className="mt-8 space-y-3.5 text-sm">
               <div className="flex items-start gap-3">
-                <MapPin className="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" />
-                <span>১৩ মাইল বাজার, কাহারোল থানা, দিনাজপুর জেলা</span>
+                <MapPin className="mt-0.5 h-5 w-5 flex-shrink-0 text-emerald-400" />
+                <span>১৩ মাইল বাজার, কাহারোল, দিনাজপুর</span>
               </div>
               <div className="flex items-center gap-3">
-                <Phone className="w-5 h-5 text-emerald-500 flex-shrink-0" />
-                <span>+8801718-533364</span>
+                <Phone className="h-5 w-5 flex-shrink-0 text-emerald-400" />
+                <span>+880 1718-533364</span>
               </div>
               <div className="flex items-center gap-3">
-                <Mail className="w-5 h-5 text-emerald-500 flex-shrink-0" />
-                <span>mothercareschoolandcollege416@gmail.com</span>
+                <Mail className="h-5 w-5 flex-shrink-0 text-emerald-400" />
+                <span className="break-all">
+                  mothercareschoolandcollege416@gmail.com
+                </span>
               </div>
             </div>
           </div>
 
           {/* Quick Links */}
-          <div className="lg:col-span-2">
-            <h4 className="text-white font-semibold mb-6 text-lg">দ্রুত লিংক</h4>
-            <ul className="space-y-3.5 text-[15px]">
-              <li>
-                <Link href="/" className="hover:text-white transition-colors">হোম</Link>
-              </li>
-              <li>
-                <Link href="#" className="hover:text-white transition-colors">আমাদের সম্পর্কে</Link>
-              </li>
-              <li>
-                <Link href="#" className="hover:text-white transition-colors">ভর্তি</Link>
-              </li>
-              <li>
-                <Link href="#" className="hover:text-white transition-colors">একাডেমিক</Link>
-              </li>
-              <li>
-                <Link href="#" className="hover:text-white transition-colors">নোটিশ</Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Academic */}
-          <div className="lg:col-span-2">
-            <h4 className="text-white font-semibold mb-6 text-lg">একাডেমিক</h4>
-            <ul className="space-y-3.5 text-[15px]">
-              <li>
-                <Link href="#" className="hover:text-white transition-colors">প্রোগ্রামসমূহ</Link>
-              </li>
-              <li>
-                <Link href="#" className="hover:text-white transition-colors">শিক্ষকবৃন্দ</Link>
-              </li>
-              <li>
-                <Link href="#" className="hover:text-white transition-colors">ফলাফল</Link>
-              </li>
-              <li>
-                <Link href="#" className="hover:text-white transition-colors">একাডেমিক ক্যালেন্ডার</Link>
-              </li>
-              <li>
-                <Link href="#" className="hover:text-white transition-colors">সুবিধাসমূহ</Link>
-              </li>
+          <div className="lg:col-span-3">
+            <h4 className="mb-5 text-lg font-semibold text-white">দ্রুত লিংক</h4>
+            <ul className="space-y-3 text-[15px]">
+              {[
+                { href: "/", label: "হোম" },
+                { href: "/about", label: "আমাদের সম্পর্কে" },
+                { href: "/admission", label: "ভর্তি তথ্য" },
+                { href: "/result", label: "ফলাফল" },
+              ].map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    className="group relative inline-block transition-colors duration-300 hover:text-white"
+                  >
+                    {link.label}
+                    <span className="absolute -bottom-0.5 left-0 h-[1.5px] w-0 bg-emerald-400 transition-all duration-300 group-hover:w-full" />
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
           {/* Connect */}
-          <div className="lg:col-span-3">
-            <h4 className="text-white font-semibold mb-6 text-lg">আমাদের সাথে যোগাযোগ</h4>
+          <div className="lg:col-span-4">
+            <h4 className="mb-5 text-lg font-semibold text-white">
+              আমাদের সাথে যুক্ত থাকুন
+            </h4>
 
-            <div className="flex gap-4">
+            <div className="flex gap-3">
               {[
                 { icon: Facebook, href: "#", label: "Facebook" },
                 { icon: Youtube, href: "#", label: "YouTube" },
@@ -103,30 +104,38 @@ const PublicFooter = () => {
                   key={i}
                   href={social.href}
                   target="_blank"
-                  whileHover={{ scale: 1.15, rotate: 5 }}
-                  className="bg-slate-800 hover:bg-emerald-600 w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300"
+                  rel="noopener noreferrer"
+                  whileHover={{ scale: 1.12, y: -3 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl bg-emerald-950/80 text-emerald-200/80 shadow-inner transition-colors duration-300 hover:bg-emerald-600 hover:text-white hover:shadow-lg hover:shadow-emerald-600/30"
                 >
-                  <social.icon className="w-5 h-5" />
+                  <social.icon className="h-5 w-5" />
                 </motion.a>
               ))}
             </div>
 
-            <div className="mt-12 text-xs text-slate-500 leading-relaxed">
-              মাদার কেয়ার স্কুল অ্যান্ড কলেজ<br />
-              প্রতিষ্ঠিত: ২০২৫<br />
-              দিনাজপুর, বাংলাদেশ
+            <div className="mt-10 text-xs leading-relaxed text-emerald-100/40">
+              <p>মাদার কেয়ার স্কুল অ্যান্ড কলেজ</p>
+              <p>প্রতিষ্ঠিত: ২০২৫ · দিনাজপুর, বাংলাদেশ</p>
             </div>
           </div>
         </div>
 
         {/* Bottom Bar */}
-        <div className="border-t border-slate-800 mt-16 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-slate-500 gap-4">
+        <div className="mt-14 flex flex-col items-center justify-between gap-4 border-t border-emerald-800/40 pt-8 text-xs text-emerald-100/40 md:flex-row">
           <p>© {year} Mother Care School & College. সর্বস্বত্ব সংরক্ষিত।</p>
+
           <div className="flex gap-6">
-            <Link href="/privacy" className="hover:text-slate-300 transition-colors">
+            <Link
+              href="/privacy"
+              className="transition-colors duration-300 hover:text-emerald-200"
+            >
               প্রাইভেসি পলিসি
             </Link>
-            <Link href="/terms" className="hover:text-slate-300 transition-colors">
+            <Link
+              href="/terms"
+              className="transition-colors duration-300 hover:text-emerald-200"
+            >
               ব্যবহারের শর্তাবলী
             </Link>
           </div>

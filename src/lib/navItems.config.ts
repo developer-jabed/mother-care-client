@@ -54,7 +54,6 @@ export const adminNavItems: NavSection[] = [
     {
         title: "শিক্ষার্থী ব্যবস্থাপনা",
         items: [
-
             { title: "শিক্ষার্থীগণ", href: "/admin/dashboard/students", icon: "Users", roles: ["ADMIN"] },
             { title: "শিক্ষার্থী ভর্তি", href: "/admin/dashboard/student-enrollment", icon: "UserPlus", roles: ["ADMIN"] },
         ],
@@ -72,6 +71,16 @@ export const adminNavItems: NavSection[] = [
             { title: "এসএমএস", href: "/admin/dashboard/sms", icon: "User", roles: ["ADMIN"] },
             { title: "শিক্ষার্থী উত্তীর্ণ", href: "/admin/dashboard/student-promote", icon: "User", roles: ["ADMIN"] },
             { title: "প্রবেশপত্র", href: "/admin/dashboard/admit-cards", icon: "FileText", roles: ["ADMIN"] },
+        ],
+    },
+    {
+        title: "ফি ব্যবস্থাপনা",
+        items: [
+            { title: "ফি ড্যাশবোর্ড", href: "/admin/dashboard/fees", icon: "LayoutDashboard", roles: ["ADMIN"] },
+            { title: "ফি টাইপ", href: "/admin/dashboard/fees/types", icon: "Tags", roles: ["ADMIN"] },
+            { title: "ফি স্ট্রাকচার", href: "/admin/dashboard/fees/structures", icon: "Settings", roles: ["ADMIN"] },
+            { title: "স্টুডেন্ট ফি", href: "/admin/dashboard/fees/student-fees", icon: "Wallet", roles: ["ADMIN"] },
+           
         ],
     },
 ];
