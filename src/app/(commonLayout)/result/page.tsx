@@ -2,7 +2,7 @@ import { ResultLookupForm } from "@/components/modules/result-lookup/ResultLookU
 import { getClasses } from "@/service/academic/createAcademicYear.service";
 import { getExams } from "@/service/exam/exam.service";
 
-export const revalidate = 300;
+export const dynamic = "force-dynamic";
 
 // app/(public)/results/page.tsx
 export default async function ResultsPage() {
