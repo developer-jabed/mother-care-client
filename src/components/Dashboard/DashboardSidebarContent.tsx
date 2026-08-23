@@ -7,8 +7,8 @@ import { cn } from "@/lib/utils";
 import { NavSection } from "@/types/dashboard.interface";
 import { UserInfo } from "@/types/userInterface";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { School } from "lucide-react";
 import DashboardBackground from "@/components/shared/DashboardBackground";
 
 interface DashboardSidebarContentProps {
@@ -32,8 +32,14 @@ const DashboardSidebarContent = ({
         {/* BRAND HEADER */}
         <div className="flex h-20 items-center px-6 border-b border-rose-100/70 bg-white/60 backdrop-blur-sm">
           <Link href={dashboardHome} className="flex items-center gap-4 group">
-            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-rose-500 via-rose-600 to-amber-500 flex items-center justify-center shadow-lg shadow-rose-500/30 transition-transform group-hover:scale-105">
-              <School className="w-6 h-6 text-white" />
+            <div className="w-11 h-11 rounded-2xl overflow-hidden relative shrink-0 shadow-lg shadow-rose-500/30 transition-transform group-hover:scale-105">
+              <Image
+                src="/asset/mothercare.png"
+                alt="Mother Care School and College Logo"
+                fill
+                className="object-cover"
+                priority
+              />
             </div>
 
             <div className="flex flex-col">

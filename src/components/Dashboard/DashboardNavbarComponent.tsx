@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/sheet";
 import { NavSection } from "@/types/dashboard.interface";
 import { UserInfo } from "@/types/user.interface";
-import { Menu, School, Bell } from "lucide-react";
+import { Menu, Bell } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import DashboardMobileSidebar from "./DashboardMobileSidebar";
@@ -43,7 +43,7 @@ const DashboardNavbarContent = ({
     <header className="sticky top-0 z-50 w-full border-b border-rose-100 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
       <div className="mx-auto max-w-screen-2xl px-4 md:px-6">
         <div className="flex h-20 items-center justify-between">
-          {/* LEFT SIDE - Mobile Menu + Logo */}
+          {/* LEFT SIDE - Mobile Menu + Brand */}
           <div className="flex items-center gap-4">
             <Sheet
               open={isMobile && isMobileMenuOpen}
@@ -64,27 +64,18 @@ const DashboardNavbarContent = ({
               </SheetContent>
             </Sheet>
 
-            {/* Logo Section */}
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2.5">
-                <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-rose-500 via-rose-600 to-amber-500 flex items-center justify-center shadow-md shadow-rose-200/60">
-                  <School className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <div className="font-bold text-xl md:text-2xl tracking-tight text-gray-900 leading-none">
-                    মাদার কেয়ার
-                  </div>
-                  <p className="text-[10px] font-semibold text-rose-600 tracking-wide -mt-0.5">
-                    স্কুল অ্যান্ড কলেজ
+            {/* Brand Section */}
+            <div className="flex items-center gap-4">
+              <div className="flex flex-col justify-center">
+                <div className="flex items-center gap-2">
+                  <span className="h-1.5 w-1.5 rounded-full bg-gradient-to-br from-rose-500 to-amber-500" />
+                  <p className="text-[11px] font-bold uppercase tracking-[1.5px] bg-gradient-to-r from-rose-600 to-amber-600 bg-clip-text text-transparent">
+                    একাডেমিক পোর্টাল
                   </p>
                 </div>
-              </div>
-
-              <div className="hidden md:block pl-6 border-l border-gray-200">
-                <p className="text-sm font-semibold text-gray-800">
-                  একাডেমিক পোর্টাল
+                <p className="text-sm md:text-base font-semibold text-gray-800 leading-tight mt-0.5">
+                  Mother Care School and College
                 </p>
-                <p className="text-xs text-gray-500">Mother Care School and College</p>
               </div>
             </div>
           </div>

@@ -62,6 +62,7 @@ export default async function ResultsPage({ searchParams }: ResultsPageProps) {
             : Promise.resolve({ success: true, data: null }),
     ]);
 
+
     return (
         <div className="flex flex-col gap-6 p-6">
             <div className="flex flex-col gap-1">

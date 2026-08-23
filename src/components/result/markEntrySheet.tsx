@@ -57,9 +57,15 @@ export function MarkEntrySheet({
   const [isPending, startTransition] = useTransition();
   const [savingId, setSavingId] = useState<number | null>(null);
 
-  // Build initial rows from students + existing results
+  // Build initial rows from students + existing results, sorted by roll number
   const initialRows = useMemo(() => {
-    return students.map((s) => {
+    const sortedStudents = [...students].sort((a, b) => {
+      const rollA = a.student.rollNumber ?? Number.MAX_SAFE_INTEGER;
+      const rollB = b.student.rollNumber ?? Number.MAX_SAFE_INTEGER;
+      return rollA - rollB;
+    });
+
+    return sortedStudents.map((s) => {
       const existing = results.find((r) => r.studentEnrollmentId === s.id);
       const thisDetail = existing?.details.find((d) => d.subjectId === subject.id);
 

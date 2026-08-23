@@ -18,6 +18,7 @@ import { UserInfo } from "@/types/user.interface";
 
 const NAV_LINKS = [
   { href: "/result", label: "ফলাফল" },
+  { href: "/events", label: "ইভেন্ট" },
   // চাইলে আরও লিঙ্ক যোগ করতে পারেন
   // { href: "/about", label: "আমাদের সম্পর্কে" },
   // { href: "/admission", label: "ভর্তি" },

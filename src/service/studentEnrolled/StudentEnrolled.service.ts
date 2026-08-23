@@ -362,15 +362,29 @@ export async function getAllStudentEnrollments(
 export async function getEnrollmentOptions(
     searchParams?: Pick<GetAllStudentEnrollmentsParams, "academicYearId" | "classId" | "sectionId">
 ): Promise<EnrollmentOption[]> {
-    const result = await getAllStudentEnrollments({
-        ...searchParams,
-        isCurrent: true,
-        limit: 500,
-    });
+    const allData: StudentEnrollment[] = [];
+    let page = 1;
+    const limit = 100; // match whatever the backend actually allows per page
 
-    if (!result.success) return [];
+    while (true) {
+        const result = await getAllStudentEnrollments({
+            ...searchParams,
+            isCurrent: true,
+            page,
+            limit,
+        });
 
-    return result.data
+        if (!result.success || result.data.length === 0) break;
+
+        allData.push(...result.data);
+
+        const total = result.meta?.total ?? 0;
+        if (allData.length >= total || result.data.length < limit) break;
+
+        page++;
+    }
+
+    return allData
         .filter(
             (enrollment) =>
                 enrollment.student != null && enrollment.class != null && enrollment.section != null
@@ -388,7 +402,6 @@ export async function getEnrollmentOptions(
             },
         }));
 }
-
 
 
 export interface RankedStudent {
