@@ -1,5 +1,9 @@
 import React from 'react';
 
+
+export const dynamic = "force-dynamic";
+
+
 const page = () => {
     return (
         <div className="flex min-h-[70vh] flex-col items-center justify-center gap-4 px-4 text-center">
